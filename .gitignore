@@ -1,4 +1,4 @@
-server
-client
+server/server
+client/client
 main
 *.pem

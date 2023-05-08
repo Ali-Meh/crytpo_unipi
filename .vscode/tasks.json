@@ -9,7 +9,10 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-lssl",
+                "-lm",
+                "-lcrypto"
             ],
             "options": {
                 "cwd": "${fileDirname}"

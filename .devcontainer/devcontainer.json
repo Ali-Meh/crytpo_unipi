@@ -9,7 +9,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-vscode.cpptools-extension-pack",
-				"tomoki1207.pdf"
+				"tomoki1207.pdf",
+				"VisualStudioExptTeam.vscodeintellicode"
 			]
 		}
 	}

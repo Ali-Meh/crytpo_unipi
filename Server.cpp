@@ -10,10 +10,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
+#include "crypto.cpp" //Code for processing [a]symectric encryptions
 
 #define TRUE 1
 #define FALSE 0
-#define PORT 8888
+#define PORT 8080
+
+// generate or load pub/prv key
 
 int main(int argc, char *argv[])
 {

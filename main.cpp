@@ -2,7 +2,7 @@
 #include <string.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
-#include "lib/crypto.cpp"
+#include "lib/RSA.cpp"
 
 int cleanup_shutdown();
 void prepare_asymmetric_enc();

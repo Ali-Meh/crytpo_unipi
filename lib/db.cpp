@@ -6,8 +6,124 @@
 
 using namespace std;
 
+struct sba_transaction_t
+{
+    int id;
+    int userId;
+    string encTransaction;
+};
+
+// Function to handle errors
+static int errorHandler(void *data, int errorCode, const char *errorMessage)
+{
+    std::cerr << "Error (" << errorCode << "): " << errorMessage << std::endl;
+    return 0;
+}
+
+// Function to insert a new transaction
+int insertTransaction(sqlite3 *db, const sba_transaction_t &transaction)
+{
+    sqlite3_stmt *stmt;
+    const char *query = "INSERT INTO Transactions (user_id, enc_transaction) VALUES (?, ?)";
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        std::cerr << "Error preparing insert statement: " << sqlite3_errmsg(db) << std::endl;
+        return -1;
+    }
+
+    // Bind values to prepared statement
+    sqlite3_bind_int(stmt, 1, transaction.userId);
+    sqlite3_bind_blob(stmt, 2, transaction.encTransaction.data(), transaction.encTransaction.size(), SQLITE_STATIC);
+
+    // Execute statement
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        std::cerr << "Error inserting transaction: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+
+    sqlite3_finalize(stmt);
+    return sqlite3_last_insert_rowid(db);
+}
+
+// Function to retrieve a transaction by ID
+sba_transaction_t getTransactionById(sqlite3 *db, int id)
+{
+    sba_transaction_t trx;
+    sqlite3_stmt *stmt;
+    const char *query = "SELECT * FROM Transactions WHERE Id = ?";
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        std::cerr << "Error preparing select statement: " << sqlite3_errmsg(db) << std::endl;
+        return trx;
+    }
+
+    // Bind value to prepared statement
+    sqlite3_bind_int(stmt, 1, id);
+
+    // Execute statement
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        std::cerr << "Error selecting transaction: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return trx;
+    }
+
+    // Create transaction object from result
+    // trx = new sba_transaction_t;
+    trx.id = sqlite3_column_int(stmt, 0);
+    trx.userId = sqlite3_column_int(stmt, 1);
+    trx.encTransaction = (char *)sqlite3_column_blob(stmt, 2);
+
+    sqlite3_finalize(stmt);
+    return trx;
+}
+
+bool updateTransaction(sqlite3 *db, const sba_transaction_t &transaction)
+{
+    std::string sql = "UPDATE Transactions SET enc_transaction = ? WHERE Id = ?";
+    sqlite3_stmt *stmt = nullptr;
+
+    int rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK)
+    {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << '\n';
+        return false;
+    }
+
+    rc = sqlite3_bind_blob(stmt, 1, transaction.encTransaction.data(), transaction.encTransaction.size(), SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        std::cerr << "Failed to bind enc_transaction: " << sqlite3_errmsg(db) << '\n';
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, transaction.id);
+    if (rc != SQLITE_OK)
+    {
+        std::cerr << "Failed to bind Id: " << sqlite3_errmsg(db) << '\n';
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << '\n';
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 // Define the struct for the client data
-struct Client
+struct sba_client_t
 {
     int id;
     string username;
@@ -20,8 +136,8 @@ struct Client
 // Define the callback function for SELECT queries
 static int selectCallback(void *data, int argc, char **argv, char **azColName)
 {
-    vector<Client> *clients = reinterpret_cast<vector<Client> *>(data);
-    Client client;
+    vector<sba_client_t> *clients = reinterpret_cast<vector<sba_client_t> *>(data);
+    sba_client_t client;
 
     for (int i = 0; i < argc; i++)
     {
@@ -59,9 +175,9 @@ static int selectCallback(void *data, int argc, char **argv, char **azColName)
 }
 
 // Function to get client information by ID
-Client getClientById(int id)
+sba_client_t getClientById(int id)
 {
-    Client client;
+    sba_client_t client;
     sqlite3 *db;
     char *zErrMsg = 0;
     int rc;
@@ -112,9 +228,9 @@ Client getClientById(int id)
     return client;
 }
 // Function to get a single client by username
-Client getClientByUsername(sqlite3 *db, const string &username)
+sba_client_t getClientByUsername(sqlite3 *db, const string &username)
 {
-    vector<Client> clients;
+    vector<sba_client_t> clients;
     string sql = "SELECT * FROM clients WHERE username = '" + username + "'";
 
     char *errorMsg = nullptr;
@@ -139,7 +255,7 @@ Client getClientByUsername(sqlite3 *db, const string &username)
 }
 
 // Function to insert a new client
-void insertClient(sqlite3 *db, const Client &client)
+void insertClient(sqlite3 *db, const sba_client_t &client)
 {
     string sql = "INSERT INTO clients (username, password, pubkey, Balance, nonce) VALUES ('" + client.username + "', '" + client.password + "', '" + client.pubkey + "', " + to_string(client.balance) + ", " + to_string(client.nonce) + ")";
 
@@ -156,7 +272,7 @@ void insertClient(sqlite3 *db, const Client &client)
 }
 
 // Define the function to update a client in the clients table
-void updateClient(sqlite3 *db, const Client &client)
+void updateClient(sqlite3 *db, const sba_client_t &client)
 {
     // Construct the SQL query string with placeholders for the values
     std::string sql = "UPDATE clients SET username = ?, password = ?, pubkey = ?, balance = ?, nonce = ? WHERE id = ?";
@@ -213,18 +329,30 @@ int main()
         cout << "Opened Database Successfully!" << endl;
     }
 
-    Client c = Client{
+    sba_transaction_t c = sba_transaction_t{
         0,
-        "ali",
-        "password",
-        "something",
-        10000.10,
-        0};
+        1,
+        (char *)"enc_password"};
 
-    insertClient(db, c);
-    Client c2 = getClientByUsername(db, "ali");
-    printf("%s==%s", c, c2);
-    puts("idonko");
+    c.id = insertTransaction(db, c);
+    c.encTransaction = "not_enc_password";
+    printf("updated %d: %d\n", c.id, updateTransaction(db, c));
+    sba_transaction_t c2 = getTransactionById(db, 18);
+    printf("%s==%s\n", c.encTransaction.data(), c2.encTransaction.data());
+    puts("idk");
+
+    // sba_client_t c = sba_client_t{
+    //     0,
+    //     "ali",
+    //     "password",
+    //     "something",
+    //     10000.10,
+    //     0};
+
+    // insertClient(db, c);
+    // sba_client_t c2 = getClientByUsername(db, "ali");
+    // printf("%s==%s", c, c2);
+    // puts("idonko");
 
     // Close the connection
     sqlite3_close(db);

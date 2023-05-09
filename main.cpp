@@ -24,21 +24,38 @@ int main(int argc, char *argv[])
     sba_client_t clients[10];
 
     // Seed data
-    clients[0] = {1001, "john_doe", "p@ssw0rd", "ssh-rsa pubkey", 5000.0, 1};
-    clients[1] = {1002, "jane_doe", "pa$$word", "ssh-rsa pubkey", 10000.0, 2};
-    clients[2] = {1003, "bob_smith", "123456", "ssh-rsa pubkey", 7500.0, 3};
-    clients[3] = {1004, "sara_lee", "ilovecake", "ssh-rsa pubkey", 2500.0, 4};
-    clients[4] = {1005, "michael_jones", "password1", "ssh-rsa pubkey", 15000.0, 5};
-    clients[5] = {1006, "elizabeth_wang", "qwerty123", "ssh-rsa pubkey", 9000.0, 6};
-    clients[6] = {1007, "will_smith", "freshprince", "ssh-rsa pubkey", 20000.0, 7};
-    clients[7] = {1008, "chris_brown", "kisskiss", "ssh-rsa pubkey", 3500.0, 8};
-    clients[8] = {1009, "amanda_wilson", "soccermom", "ssh-rsa pubkey", 12000.0, 9};
-    clients[9] = {1010, "steven_nguyen", "letmein", "ssh-rsa pubkey", 8000.0, 10};
+    clients[0] = {1001, "john_doe", "p@ssw0rd", "", 5000.0, 1};
+    clients[1] = {1002, "jane_doe", "pa$$word", "", 10000.0, 2};
+    clients[2] = {1003, "bob_smith", "123456", "", 7500.0, 3};
+    clients[3] = {1004, "sara_lee", "ilovecake", "", 2500.0, 4};
+    clients[4] = {1005, "michael_jones", "password1", "", 15000.0, 5};
+    clients[5] = {1006, "elizabeth_wang", "qwerty123", "", 9000.0, 6};
+    clients[6] = {1007, "will_smith", "freshprince", "", 20000.0, 7};
+    clients[7] = {1008, "chris_brown", "kisskiss", "", 3500.0, 8};
+    clients[8] = {1009, "amanda_wilson", "soccermom", "", 12000.0, 9};
+    clients[9] = {1010, "steven_nguyen", "letmein", "", 8000.0, 10};
 
     // Print the seed data
     for (int i = 0; i < 10; i++)
     {
         clients[i].password = hash_password(clients[i].password);
+        // Generate a new RSA keypair
+        RSA *rsa = generate_keypair();
+
+        // Get the public key from the RSA keypair
+        EVP_PKEY *pkey = EVP_PKEY_new();
+        EVP_PKEY_set1_RSA(pkey, rsa);
+        BIO *bp_public = BIO_new(BIO_s_mem());
+        PEM_write_bio_PUBKEY(bp_public, pkey);
+
+        // Save the public key in the client's pubkey variable
+        char *pubkey_buf = nullptr;
+        long pubkey_len = BIO_get_mem_data(bp_public, &pubkey_buf);
+        clients[i].pubkey = string(pubkey_buf, pubkey_len);
+
+        BIO_free(bp_public);
+        EVP_PKEY_free(pkey);
+
         insertClient(db, clients[i]);
     }
 

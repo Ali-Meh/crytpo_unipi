@@ -308,54 +308,54 @@ void updateClient(sqlite3 *db, const sba_client_t &client)
     std::cout << "Client " << client.id << " updated successfully!" << std::endl;
 }
 
-int main()
-{
-    // Pointer to SQLite connection
-    sqlite3 *db;
+// int main()
+// {
+//     // Pointer to SQLite connection
+//     sqlite3 *db;
 
-    // Save the connection result
-    int exit = 0;
-    exit = sqlite3_open("SBA.db", &db);
+//     // Save the connection result
+//     int exit = 0;
+//     exit = sqlite3_open("SBA.db", &db);
 
-    // Test if there was an error
-    if (exit)
-    {
+//     // Test if there was an error
+//     if (exit)
+//     {
 
-        cout << "DB Open Error: " << sqlite3_errmsg(db) << endl;
-    }
-    else
-    {
+//         cout << "DB Open Error: " << sqlite3_errmsg(db) << endl;
+//     }
+//     else
+//     {
 
-        cout << "Opened Database Successfully!" << endl;
-    }
+//         cout << "Opened Database Successfully!" << endl;
+//     }
 
-    sba_transaction_t c = sba_transaction_t{
-        0,
-        1,
-        (char *)"enc_password"};
+//     sba_transaction_t c = sba_transaction_t{
+//         0,
+//         1,
+//         (char *)"enc_password"};
 
-    c.id = insertTransaction(db, c);
-    c.encTransaction = "not_enc_password";
-    printf("updated %d: %d\n", c.id, updateTransaction(db, c));
-    sba_transaction_t c2 = getTransactionById(db, 18);
-    printf("%s==%s\n", c.encTransaction.data(), c2.encTransaction.data());
-    puts("idk");
+//     c.id = insertTransaction(db, c);
+//     c.encTransaction = "not_enc_password";
+//     printf("updated %d: %d\n", c.id, updateTransaction(db, c));
+//     sba_transaction_t c2 = getTransactionById(db, 18);
+//     printf("%s==%s\n", c.encTransaction.data(), c2.encTransaction.data());
+//     puts("idk");
 
-    // sba_client_t c = sba_client_t{
-    //     0,
-    //     "ali",
-    //     "password",
-    //     "something",
-    //     10000.10,
-    //     0};
+//     // sba_client_t c = sba_client_t{
+//     //     0,
+//     //     "ali",
+//     //     "password",
+//     //     "something",
+//     //     10000.10,
+//     //     0};
 
-    // insertClient(db, c);
-    // sba_client_t c2 = getClientByUsername(db, "ali");
-    // printf("%s==%s", c, c2);
-    // puts("idonko");
+//     // insertClient(db, c);
+//     // sba_client_t c2 = getClientByUsername(db, "ali");
+//     // printf("%s==%s", c, c2);
+//     // puts("idonko");
 
-    // Close the connection
-    sqlite3_close(db);
+//     // Close the connection
+//     sqlite3_close(db);
 
-    return (0);
-}
+//     return (0);
+// }

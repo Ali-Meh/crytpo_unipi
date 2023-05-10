@@ -2,6 +2,8 @@
 // Handle multiple socket connections with select and fd_set on Linux
 #include <stdio.h>
 #include <string.h> //strlen
+#include <cstring>
+#include "vector"
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>    //close
@@ -10,7 +12,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
-#include "RSA.cpp" //Code for processing [a]symectric encryptions
+// #include "RSA.cpp" //Code for processing [a]symectric encryptions
+#include "../lib/util.cpp" //Code for processing [a]symectric encryptions
+
+using namespace std;
 
 #define TRUE 1
 #define FALSE 0
@@ -32,7 +37,7 @@ int main(int argc, char *argv[])
     fd_set readfds;
 
     // a message
-    char *message = (char *)"ECHO Daemon v1.0 \r\n";
+    char *message = (char *)"Welcome to SBA server v1.0 \r\n";
 
     // initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++)
@@ -177,6 +182,10 @@ int main(int argc, char *argv[])
                     // set the string terminating NULL byte on the end
                     // of the data read
                     buffer[valread] = '\0';
+                    // Parse the message
+                    string message(buffer);
+                    vector<string> parts = split(message, ':');
+                    printf("%s command Received\n", parts[0].c_str());
                     send(sd, buffer, strlen(buffer), 0);
                 }
             }

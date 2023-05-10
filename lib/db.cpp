@@ -228,7 +228,7 @@ sba_client_t getClientById(int id)
     return client;
 }
 // Function to get a single client by username
-sba_client_t getClientByUsername(sqlite3 *db, const string &username)
+vector<sba_client_t> getClientByUsername(sqlite3 *db, const string &username)
 {
     vector<sba_client_t> clients;
     string sql = "SELECT * FROM clients WHERE username = '" + username + "'";
@@ -244,14 +244,14 @@ sba_client_t getClientByUsername(sqlite3 *db, const string &username)
         exit(1);
     }
 
-    if (clients.empty())
-    {
-        cerr << "Client not found" << endl;
-        sqlite3_close(db);
-        exit(1);
-    }
+    // if (clients.empty())
+    // {
+    //     cerr << "Client not found" << endl;
+    //     sqlite3_close(db);
+    //     exit(1);
+    // }
 
-    return clients[0];
+    return clients;
 }
 
 // Function to insert a new client

@@ -17,7 +17,6 @@ int main(int argc, char *argv[])
     // prepare_asymmetric_enc();
 
     connect_db("lib/SBA.db");
-
     seed_db(db);
 
     return cleanup_shutdown();

@@ -4,6 +4,7 @@
 
 void seed_db(sqlite3 *db)
 {
+
     RSA *keypair;
 
     // Initialize an array of sba_client_t with 10 elements
@@ -21,6 +22,13 @@ void seed_db(sqlite3 *db)
     clients[8] = {1009, "amanda_wilson", "soccermom", "", 12000.0, 9};
     clients[9] = {1010, "steven_nguyen", "letmein", "", 8000.0, 10};
 
+    vector<sba_client_t> client = getClientByUsername(db, clients[0].username);
+    if (!client.empty())
+    {
+        cout << "no need to seed it's already there." << endl;
+        return;
+    }
+
     // Print the seed data
     for (int i = 0; i < 10; i++)
     {
@@ -35,6 +43,7 @@ void seed_db(sqlite3 *db)
         save_keypair_to_file(keypair, (key_path + "sc" + to_string(id) + ext).c_str(), (key_path + "pc" + to_string(id) + ext).c_str());
         RSA_free(keypair);
     }
+    cout << "seed data to db complete." << endl;
 }
 
 // will generate or load up the prv/pub keys for asymmetric encryption

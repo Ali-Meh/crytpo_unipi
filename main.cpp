@@ -26,6 +26,7 @@ int cleanup_shutdown()
 {
     // Clean up
     // RSA_free(keypair);
+    sqlite3_close(db);
     return 0;
 }
 

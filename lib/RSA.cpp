@@ -1,5 +1,4 @@
-#include <string.h>
-
+#include <string>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
@@ -49,6 +48,27 @@ RSA *generate_keypair(int key_length = 2048)
     return keypair;
 }
 
+std::string pubkey_tostring(RSA *keypair)
+{
+
+    // Get the public key from the RSA keypair
+    EVP_PKEY *pkey = EVP_PKEY_new();
+    EVP_PKEY_set1_RSA(pkey, keypair);
+    BIO *bp_public = BIO_new(BIO_s_mem());
+    PEM_write_bio_PUBKEY(bp_public, pkey);
+
+    // Save the public key in the client's pubkey variable
+    char *pubkey_buf = nullptr;
+    long pubkey_len = BIO_get_mem_data(bp_public, &pubkey_buf);
+
+    std::string pubkey = std::string(pubkey_buf, pubkey_len);
+
+    BIO_free(bp_public);
+    EVP_PKEY_free(pkey);
+
+    return pubkey;
+}
+
 int save_keypair_to_file(RSA *keypair, const char *prv_key_file = PRV_FILE, const char *pub_key_file = PUB_FILE)
 {
     BIO *bp_public = NULL, *bp_private = NULL;
@@ -77,9 +97,9 @@ free_all:
     return ret;
 }
 
-void write_to_file(const char *filename, const char *data)
-{
-    FILE *file = fopen(filename, "wb");
-    fwrite(data, strlen(data), 1, file);
-    fclose(file);
-}
+// void write_to_file(const char *filename, const char *data)
+// {
+//     FILE *file = fopen(filename, "wb");
+//     fwrite(data, strlen(data), 1, file);
+//     fclose(file);
+// }

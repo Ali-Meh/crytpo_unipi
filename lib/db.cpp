@@ -255,7 +255,7 @@ sba_client_t getClientByUsername(sqlite3 *db, const string &username)
 }
 
 // Function to insert a new client
-void insertClient(sqlite3 *db, const sba_client_t &client)
+int insertClient(sqlite3 *db, const sba_client_t &client)
 {
     string sql = "INSERT INTO clients (username, password, pubkey, Balance, nonce) VALUES ('" + client.username + "', '" + client.password + "', '" + client.pubkey + "', " + to_string(client.balance) + ", " + to_string(client.nonce) + ")";
 
@@ -269,6 +269,8 @@ void insertClient(sqlite3 *db, const sba_client_t &client)
         sqlite3_close(db);
         exit(1);
     }
+
+    return sqlite3_last_insert_rowid(db);
 }
 
 // Define the function to update a client in the clients table

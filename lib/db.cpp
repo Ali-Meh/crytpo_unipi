@@ -310,6 +310,24 @@ void updateClient(sqlite3 *db, const sba_client_t &client)
     std::cout << "Client " << client.id << " updated successfully!" << std::endl;
 }
 
+sqlite3 *connect(char *file = "SBA.db")
+{
+    sqlite3 *db;
+    int exit = 0;
+    exit = sqlite3_open(file, &db);
+    if (exit)
+    {
+
+        cout << "DB Open Error: " << sqlite3_errmsg(db) << endl;
+    }
+    else
+    {
+
+        cout << "Opened Database Successfully!" << endl;
+    }
+    return db;
+}
+
 // int main()
 // {
 //     // Pointer to SQLite connection

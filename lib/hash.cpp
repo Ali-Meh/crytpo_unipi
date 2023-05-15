@@ -5,7 +5,6 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include "util.cpp"
 
 using namespace std;
 
@@ -34,6 +33,19 @@ string hash_password(const string &password)
 
     EVP_MD_CTX_free(ctx);
     return bin_to_hex((unsigned char *)salt.c_str(), salt.size()) + ":" + bin_to_hex(digest, digest_len);
+}
+
+unsigned char *sha256(unsigned char *input, int input_length, unsigned char *digest, unsigned int *digest_len)
+{
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_sha256();
+
+    EVP_DigestInit_ex(ctx, md, NULL);
+    EVP_DigestUpdate(ctx, input, input_length);
+    EVP_DigestFinal_ex(ctx, digest, digest_len);
+    EVP_MD_CTX_free(ctx);
+
+    return digest;
 }
 
 bool verify_password(const string &input, const string &current)

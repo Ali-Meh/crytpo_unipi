@@ -1,6 +1,10 @@
-#include <string>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
+#include <string>
+#include <vector>
+
+using namespace std;
 
 const char *PUB_FILE = "pub.pem";
 const char *PRV_FILE = "prv.pem";
@@ -48,7 +52,7 @@ RSA *generate_keypair(int key_length = 2048)
     return keypair;
 }
 
-std::string pubkey_tostring(RSA *keypair)
+string pubkey_tostring(RSA *keypair)
 {
 
     // Get the public key from the RSA keypair
@@ -61,7 +65,7 @@ std::string pubkey_tostring(RSA *keypair)
     char *pubkey_buf = nullptr;
     long pubkey_len = BIO_get_mem_data(bp_public, &pubkey_buf);
 
-    std::string pubkey = std::string(pubkey_buf, pubkey_len);
+    string pubkey = string(pubkey_buf, pubkey_len);
 
     BIO_free(bp_public);
     EVP_PKEY_free(pkey);
@@ -103,3 +107,77 @@ free_all:
 //     fwrite(data, strlen(data), 1, file);
 //     fclose(file);
 // }
+
+// Function to encrypt a message using RSA public key
+
+string encryptPubRSA(const string &message, const string &publicKeyPEM)
+{
+    const unsigned char *publicKeyData = reinterpret_cast<const unsigned char *>(publicKeyPEM.c_str());
+    BIO *bio = BIO_new_mem_buf(publicKeyData, -1); // -1 means null-terminated string
+    if (!bio)
+    {
+        perror("Failed to create BIO");
+        return "";
+    }
+
+    RSA *rsa = PEM_read_bio_RSA_PUBKEY(bio, nullptr, nullptr, nullptr);
+    BIO_free(bio);
+
+    if (!rsa)
+    {
+        ERR_print_errors_fp(stderr);
+        return "";
+    }
+
+    int encryptedSize = RSA_size(rsa);
+    vector<unsigned char> encrypted(encryptedSize);
+
+    int result = RSA_public_encrypt(message.size(), reinterpret_cast<const unsigned char *>(message.c_str()),
+                                    encrypted.data(), rsa, RSA_PKCS1_PADDING);
+    if (result == -1)
+    {
+        ERR_print_errors_fp(stderr);
+        RSA_free(rsa);
+        return "";
+    }
+
+    RSA_free(rsa);
+
+    return string(reinterpret_cast<const char *>(encrypted.data()), result);
+}
+
+// Function to decrypt a message using RSA private key
+string decryptPrvRSA(const string &encryptedMessage, const string &privateKeyPath)
+{
+    FILE *privateKeyFile = fopen(privateKeyPath.c_str(), "rb");
+    if (!privateKeyFile)
+    {
+        perror("Failed to open private key file");
+        return "";
+    }
+
+    RSA *rsa = PEM_read_RSAPrivateKey(privateKeyFile, nullptr, nullptr, nullptr);
+    fclose(privateKeyFile);
+
+    if (!rsa)
+    {
+        ERR_print_errors_fp(stderr);
+        return "";
+    }
+
+    int decryptedSize = RSA_size(rsa);
+    vector<unsigned char> decrypted(decryptedSize);
+
+    int result = RSA_private_decrypt(encryptedMessage.size(), reinterpret_cast<const unsigned char *>(encryptedMessage.c_str()),
+                                     decrypted.data(), rsa, RSA_PKCS1_PADDING);
+    if (result == -1)
+    {
+        ERR_print_errors_fp(stderr);
+        RSA_free(rsa);
+        return "";
+    }
+
+    RSA_free(rsa);
+
+    return string(reinterpret_cast<const char *>(decrypted.data()), result);
+}

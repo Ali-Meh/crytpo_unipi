@@ -6,8 +6,9 @@
 #include <unistd.h>
 
 #define PORT 8080
-#define MAX_COMMAND_LENGTH 1024
+#define MAX_COMMAND_LENGTH 128
 #define MAX_FIELD_LENGTH 255
+#define MAX_MSG_LENGTH 512
 
 int main(int argc, char *argv[])
 {
@@ -38,9 +39,11 @@ int main(int argc, char *argv[])
         printf("\nConnection Failed \n");
         return -1;
     }
-    char buffer[MAX_COMMAND_LENGTH] = {0};
-    read(sock, buffer, MAX_COMMAND_LENGTH);
+    char buffer[MAX_MSG_LENGTH] = {0};
+    read(sock, buffer, MAX_MSG_LENGTH);
     printf("%s\n", buffer);
+
+    // login
 
     // Loop for sending commands to server
     while (1)

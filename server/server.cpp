@@ -11,9 +11,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
-// #include "RSA.cpp" //Code for processing [a]symectric encryptions
-#include "../lib/util.cpp" //Code for processing [a]symectric encryptions
+#include <sys/time.h>      //FD_SET, FD_ISSET, FD_ZERO macros
+#include "../lib/RSA.cpp"  //Code for processing [a]symectric encryptions
+#include "../lib/db.cpp"   //Code for processing db
+#include "../lib/util.cpp" //Code for processing utilities
+#include "../lib/hash.cpp" //Code for processing hashing
+#include "../lib/AES.cpp"  //Code for processing symectric encryptions
 
 using namespace std;
 
@@ -23,13 +26,23 @@ using namespace std;
 
 // generate or load pub/prv key
 
+/* Structure describing an Internet socket address.  */
+struct sba_client_conn
+{
+    bool in_use;
+    int sd;             /*Socket Descriptor*/
+    string session_key; /*Session key for secure connection*/
+    int valid_until;    /*Session key validity period*/
+};
+
 int main(int argc, char *argv[])
 {
     int opt = TRUE;
-    int master_socket, addrlen, new_socket, client_socket[30],
-        max_clients = 30, activity, i, valread, sd;
+    int master_socket, addrlen, new_socket, max_clients = 30, activity, i, valread, sd;
     int max_sd;
+    sqlite3 *db = connect();
     struct sockaddr_in address;
+    sba_client_conn client_socket[30];
 
     char buffer[1025]; // data buffer of 1K
 
@@ -42,7 +55,8 @@ int main(int argc, char *argv[])
     // initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++)
     {
-        client_socket[i] = 0;
+        client_socket[i].in_use = false;
+        client_socket[i].sd = 0;
     }
 
     // create a master socket
@@ -98,10 +112,10 @@ int main(int argc, char *argv[])
         for (i = 0; i < max_clients; i++)
         {
             // socket descriptor
-            sd = client_socket[i];
+            sd = client_socket[i].sd;
 
             // if valid socket descriptor then add to read list
-            if (sd > 0)
+            if (sd > 0 && client_socket[i].in_use)
                 FD_SET(sd, &readfds);
 
             // highest file descriptor number, need it for the select function
@@ -144,9 +158,10 @@ int main(int argc, char *argv[])
             for (i = 0; i < max_clients; i++)
             {
                 // if position is empty
-                if (client_socket[i] == 0)
+                if (client_socket[i].in_use == false)
                 {
-                    client_socket[i] = new_socket;
+                    client_socket[i].sd = new_socket;
+                    client_socket[i].in_use = true;
                     printf("Adding to list of sockets as %d\n", i);
 
                     break;
@@ -157,7 +172,7 @@ int main(int argc, char *argv[])
         // else its some IO operation on some other socket
         for (i = 0; i < max_clients; i++)
         {
-            sd = client_socket[i];
+            sd = client_socket[i].sd;
 
             if (FD_ISSET(sd, &readfds))
             {
@@ -173,7 +188,7 @@ int main(int argc, char *argv[])
 
                     // Close the socket and mark as 0 in list for reuse
                     close(sd);
-                    client_socket[i] = 0;
+                    client_socket[i].in_use = false;
                 }
 
                 // Echo back the message that came in
@@ -184,9 +199,48 @@ int main(int argc, char *argv[])
                     buffer[valread] = '\0';
                     // Parse the message
                     string message(buffer);
+
+                    if (client_socket[i].session_key.empty())
+                    { // it's login request decrypt via pub/prv keys
+                        string decrypted = decryptPrvRSA(message, "../prv.pem");
+                        vector<string> parts = split(message, ':');
+                        if (strcmp(parts[0].c_str(), "login") != 0)
+                        {
+                            sprintf(buffer, "ERROR: %s\n\r\0", "unathorized!");
+                            send(sd, buffer, strlen(buffer), 0);
+                        }
+
+                        vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
+                        if (db_users.empty())
+                        {
+                            sprintf(buffer, "ERROR: %s\n\r\0", "unathorized!");
+                            send(sd, buffer, strlen(buffer), 0);
+                        }
+
+                        if (!verify_password(parts[2], db_users[0].password))
+                        {
+                            sprintf(buffer, "ERROR: %s\n\r\0", "unathorized!");
+                            send(sd, buffer, strlen(buffer), 0);
+                        }
+                        else
+                        {
+                            // generate session key
+                            client_socket[i].session_key = generate_aes_key();
+                            // encrypt with users pubkey
+                            sprintf(buffer, "SET_SESSION_KEY:%s\n\r\0", client_socket[i].session_key);
+                            string msg = encryptPubRSA(buffer, db_users[0].pubkey);
+                            // send it over to user to use
+                            send(sd, msg.c_str(), msg.size(), 0);
+                        }
+                    }
+                    else
+                    { // it's symetric key decrypt via session key
+                    }
+
                     vector<string> parts = split(message, ':');
-                    printf("%s command Received\n", parts[0].c_str());
-                    send(sd, buffer, strlen(buffer), 0);
+                    printf("%s command Received\n\r", parts[0].c_str());
+                    sprintf(buffer, "%s %s\n", "recived: ", message.c_str());
+                    send(sd, buffer, strlen(buffer) + 10, 0);
                 }
             }
         }

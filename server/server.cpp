@@ -24,8 +24,6 @@ using namespace std;
 #define FALSE 0
 #define PORT 8080
 
-// generate or load pub/prv key
-
 /* Structure describing an Internet socket address.  */
 struct sba_client_conn
 {
@@ -35,12 +33,20 @@ struct sba_client_conn
     int valid_until;    /*Session key validity period*/
 };
 
+void close_and_free_socket(sba_client_conn client_socket)
+{
+    // Close the socket and mark as 0 in list for reuse
+    close(client_socket.sd);
+    client_socket.in_use = false;
+    client_socket.sd = 0;
+}
+
 int main(int argc, char *argv[])
 {
     int opt = TRUE;
     int master_socket, addrlen, new_socket, max_clients = 30, activity, i, valread, sd;
     int max_sd;
-    sqlite3 *db = connect();
+    sqlite3 *db = connect("../SBA.db");
     struct sockaddr_in address;
     sba_client_conn client_socket[30];
 
@@ -187,8 +193,7 @@ int main(int argc, char *argv[])
                            inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
                     // Close the socket and mark as 0 in list for reuse
-                    close(sd);
-                    client_socket[i].in_use = false;
+                    close_and_free_socket(client_socket[i]);
                 }
 
                 // Echo back the message that came in
@@ -196,39 +201,41 @@ int main(int argc, char *argv[])
                 {
                     // set the string terminating NULL byte on the end
                     // of the data read
-                    buffer[valread] = '\0';
+                    // buffer[valread] = '\0';
                     // Parse the message
-                    string message(buffer);
+                    string message(buffer, valread);
+                    // printf("Message: %s\n", message);
 
                     if (client_socket[i].session_key.empty())
                     { // it's login request decrypt via pub/prv keys
                         string decrypted = decryptPrvRSA(message, "../prv.pem");
-                        vector<string> parts = split(message, ':');
+                        printf("command Received: %s\n\r", decrypted.c_str());
+                        vector<string> parts = split(decrypted, ':');
                         if (strcmp(parts[0].c_str(), "login") != 0)
                         {
-                            sprintf(buffer, "ERROR: %s\n\r\0", "unathorized!");
-                            send(sd, buffer, strlen(buffer), 0);
+                            sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                            send(sd, buffer, 0, 0);
+                            close_and_free_socket(client_socket[i]);
                         }
 
                         vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
-                        if (db_users.empty())
+                        printf("found user id %d\n", db_users[0].id);
+                        if (db_users.empty() || !verify_password(parts[2], db_users[0].password))
                         {
-                            sprintf(buffer, "ERROR: %s\n\r\0", "unathorized!");
+                            sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                            printf("wrote %d bytes to buffer, %s\n", strlen(buffer), buffer);
                             send(sd, buffer, strlen(buffer), 0);
-                        }
-
-                        if (!verify_password(parts[2], db_users[0].password))
-                        {
-                            sprintf(buffer, "ERROR: %s\n\r\0", "unathorized!");
-                            send(sd, buffer, strlen(buffer), 0);
+                            close_and_free_socket(client_socket[i]);
                         }
                         else
                         {
                             // generate session key
                             client_socket[i].session_key = generate_aes_key();
                             // encrypt with users pubkey
-                            sprintf(buffer, "SET_SESSION_KEY:%s\n\r\0", client_socket[i].session_key);
+                            sprintf(buffer, "SET_SESSION_KEY:%s\n\r\0", client_socket[i].session_key.data());
+                            printf("session: %s\n", buffer);
                             string msg = encryptPubRSA(buffer, db_users[0].pubkey);
+                            printf("session: %s\n", bin_to_hex((unsigned char *)msg.data(), msg.size()).data());
                             // send it over to user to use
                             send(sd, msg.c_str(), msg.size(), 0);
                         }
@@ -237,10 +244,10 @@ int main(int argc, char *argv[])
                     { // it's symetric key decrypt via session key
                     }
 
-                    vector<string> parts = split(message, ':');
-                    printf("%s command Received\n\r", parts[0].c_str());
-                    sprintf(buffer, "%s %s\n", "recived: ", message.c_str());
-                    send(sd, buffer, strlen(buffer) + 10, 0);
+                    // vector<string> parts = split(message, ':');
+                    // printf("%s command Received\n\r", parts[0].c_str());
+                    // sprintf(buffer, "%s %s\n", "recived: ", message.c_str());
+                    // send(sd, buffer, strlen(buffer) + 10, 0);
                 }
             }
         }

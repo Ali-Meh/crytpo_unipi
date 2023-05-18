@@ -112,16 +112,50 @@ free_all:
 
 string encryptPubRSA(const string &message, const string &publicKeyPEM)
 {
-    const unsigned char *publicKeyData = reinterpret_cast<const unsigned char *>(publicKeyPEM.c_str());
-    BIO *bio = BIO_new_mem_buf(publicKeyData, -1); // -1 means null-terminated string
+    // const unsigned char *publicKeyData = reinterpret_cast<const unsigned char *>(publicKeyPEM.c_str());
+    BIO *bio = BIO_new_mem_buf(publicKeyPEM.c_str(), publicKeyPEM.size()); // -1 means null-terminated string
     if (!bio)
     {
         perror("Failed to create BIO");
         return "";
     }
 
-    RSA *rsa = PEM_read_bio_RSA_PUBKEY(bio, nullptr, nullptr, nullptr);
+    RSA *rsa = PEM_read_bio_RSAPublicKey(bio, nullptr, nullptr, nullptr);
     BIO_free(bio);
+
+    if (!rsa)
+    {
+        ERR_print_errors_fp(stderr);
+        return "";
+    }
+
+    int encryptedSize = RSA_size(rsa);
+    vector<unsigned char> encrypted(encryptedSize);
+
+    int result = RSA_public_encrypt(message.size(), reinterpret_cast<const unsigned char *>(message.c_str()),
+                                    encrypted.data(), rsa, RSA_PKCS1_PADDING);
+    if (result == -1)
+    {
+        ERR_print_errors_fp(stderr);
+        RSA_free(rsa);
+        return "";
+    }
+
+    RSA_free(rsa);
+
+    return string(reinterpret_cast<const char *>(encrypted.data()), result);
+}
+string encryptPubRSAFile(const string &message, const string &publicKeyPath)
+{
+    FILE *publicKeyFile = fopen(publicKeyPath.c_str(), "rb");
+    if (!publicKeyFile)
+    {
+        perror("Failed to open public key file");
+        return "";
+    }
+
+    RSA *rsa = PEM_read_RSAPublicKey(publicKeyFile, nullptr, nullptr, nullptr);
+    fclose(publicKeyFile);
 
     if (!rsa)
     {

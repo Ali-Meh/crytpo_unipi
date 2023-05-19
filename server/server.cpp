@@ -14,7 +14,6 @@
 #include <sys/time.h>      //FD_SET, FD_ISSET, FD_ZERO macros
 #include "../lib/RSA.cpp"  //Code for processing [a]symectric encryptions
 #include "../lib/db.cpp"   //Code for processing db
-#include "../lib/util.cpp" //Code for processing utilities
 #include "../lib/hash.cpp" //Code for processing hashing
 #include "../lib/AES.cpp"  //Code for processing symectric encryptions
 
@@ -232,8 +231,9 @@ int main(int argc, char *argv[])
                             // generate session key
                             client_socket[i].session_key = generate_aes_key();
                             // encrypt with users pubkey
-                            sprintf(buffer, "SET_SESSION_KEY:%s\n\r\0", client_socket[i].session_key.data());
-                            printf("session: %s\n", buffer);
+                            sprintf(buffer, "SET_SESSION_KEY:%s\0", client_socket[i].session_key.data());
+
+                            printf("SET_SESSION_KEY:%s\n\r\0", bin_to_hex((unsigned char *)client_socket[i].session_key.data(), client_socket[i].session_key.size()).data());
                             string msg = encryptPubRSA(buffer, db_users[0].pubkey);
                             printf("session: %s\n", bin_to_hex((unsigned char *)msg.data(), msg.size()).data());
                             // send it over to user to use
@@ -242,6 +242,37 @@ int main(int argc, char *argv[])
                     }
                     else
                     { // it's symetric key decrypt via session key
+                      // decrypt the payload recived
+                        string decrypted(decrypt_data(buffer, valread, (char *)client_socket[i].session_key.data()), valread);
+                        printf("%s: %s\n", decrypted, bin_to_hex((unsigned char *)buffer, valread).data());
+                        vector<string> parts = split(decrypted, ':');
+                        // switch based on the command [0]
+                        if (strcmp(parts[0].data(), "balance"))
+                        {
+                            vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
+                            if (db_users.empty())
+                            {
+                                sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                                send(sd, buffer, 0, 0);
+                            }
+                            else
+                            {
+                                printf("found user id %d\n", db_users[0].id);
+                                sprintf(buffer, "BALANCE: %d\0", db_users[0].balance);
+                                char *payload = encrypt_data(buffer, strlen(buffer), (char *)client_socket[i].session_key.data());
+                                send(sd, payload, strlen(payload), 0);
+                            }
+                        }
+                        else if (strcmp(parts[0].data(), "transfer"))
+                        {
+                            cerr << "TODO:TRANSFER";
+                        }
+                        else
+                        {
+                            cerr << "TODO:ELSE";
+                        }
+
+                        // encrypt and send back the response
                     }
 
                     // vector<string> parts = split(message, ':');

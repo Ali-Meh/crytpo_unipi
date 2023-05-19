@@ -1,12 +1,14 @@
 #include <iostream>
+#include <vector>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include "../lib/hash.cpp" //Code for processing hashing
+#include "../lib/AES.cpp"
 #include "../lib/RSA.cpp"
-#include "../lib/util.cpp"
 
 using namespace std;
 
@@ -21,6 +23,7 @@ int main(int argc, char *argv[])
     {
         int sock = 0;
         struct sockaddr_in serv_addr;
+        char *session_key;
 
         // Create socket
         if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -82,8 +85,8 @@ int main(int argc, char *argv[])
         string decrypted = decryptPrvRSA(bufferStr, "../keys/sc102.pem");
         printf("decrypted: %s\n", decrypted.data());
         vector<string> parts = split(decrypted, ':');
-        printf("decrypted session key: %s\n", bin_to_hex((unsigned char *)parts[1].data(), parts[1].size()).data());
-
+        session_key = (char *)parts[1].data();
+        printf("decrypted session key: %s\n", bin_to_hex((unsigned char *)session_key, parts[1].size()).data());
         // Loop for sending commands to server
         while (1)
         {
@@ -118,22 +121,27 @@ int main(int argc, char *argv[])
             // Send balance command with username
             if (strcmp(command, "balance") == 0)
             {
-                char username[MAX_FIELD_LENGTH];
-                printf("Enter username: ");
-                fgets(username, MAX_FIELD_LENGTH, stdin);
-                strtok(username, "\n");
+                // char username[MAX_FIELD_LENGTH];
+                // printf("Enter username: ");
+                // fgets(username, MAX_FIELD_LENGTH, stdin);
+                // strtok(username, "\n");
 
                 // Construct balance message
                 char message[MAX_COMMAND_LENGTH + MAX_FIELD_LENGTH];
                 sprintf(message, "%s:%s", command, username);
 
+                // encrypt command
+                char *payload = encrypt_data(message, strlen(message), session_key);
+
                 // Send message to server
-                send(sock, message, strlen(message), 0);
+                send(sock, payload, strlen(message), 0);
 
                 // Receive response from server
                 char buffer[MAX_COMMAND_LENGTH] = {0};
-                read(sock, buffer, MAX_COMMAND_LENGTH);
-                printf("%s\n", buffer);
+                len = read(sock, buffer, MAX_COMMAND_LENGTH);
+                payload = decrypt_data(buffer, len, session_key);
+
+                printf("recived balance: %s\n", payload);
             }
 
             // Send transfer command with username and amount

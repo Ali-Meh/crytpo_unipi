@@ -243,8 +243,9 @@ int main(int argc, char *argv[])
                     else
                     { // it's symetric key decrypt via session key
                       // decrypt the payload recived
-                        string decrypted(decrypt_data(buffer, valread, (char *)client_socket[i].session_key.data()), valread);
-                        printf("%s: %s\n", decrypted, bin_to_hex((unsigned char *)buffer, valread).data());
+                        size_t ciphertextLength;
+                        string decrypted(decryptAES256(reinterpret_cast<const unsigned char *>(client_socket[i].session_key.data()), (unsigned char *)buffer, valread, &ciphertextLength);
+                        printf("decrypted recived aes: %s: %s\n", decrypted, bin_to_hex((unsigned char *)buffer, valread).data());
                         vector<string> parts = split(decrypted, ':');
                         // switch based on the command [0]
                         if (strcmp(parts[0].data(), "balance"))
@@ -259,7 +260,7 @@ int main(int argc, char *argv[])
                             {
                                 printf("found user id %d\n", db_users[0].id);
                                 sprintf(buffer, "BALANCE: %d\0", db_users[0].balance);
-                                char *payload = encrypt_data(buffer, strlen(buffer), (char *)client_socket[i].session_key.data());
+                                char *payload = encrypt_data((unsigned char *)buffer, strlen(buffer), (unsigned char *)client_socket[i].session_key.data());
                                 send(sd, payload, strlen(payload), 0);
                             }
                         }

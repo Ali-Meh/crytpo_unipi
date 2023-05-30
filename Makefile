@@ -15,8 +15,10 @@ ser:
 
 cli:
 	cd client && g++ -o client client.cpp -lssl -lm -lcrypto -l sqlite3 && ./client
+aes:
+	cd lib && g++ -o temp AES.cpp -lssl -lm -lcrypto -l sqlite3 && ./temp
 
 nc:
 	nc localhost 8080
 
-..PHONY: server client
+..PHONY: server client aes

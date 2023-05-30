@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     {
         int sock = 0;
         struct sockaddr_in serv_addr;
-        char *session_key;
+        const unsigned char *session_key;
 
         // Create socket
         if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         string decrypted = decryptPrvRSA(bufferStr, "../keys/sc102.pem");
         printf("decrypted: %s\n", decrypted.data());
         vector<string> parts = split(decrypted, ':');
-        session_key = (char *)parts[1].data();
+        session_key = reinterpret_cast<const unsigned char *>(parts[1].data());
         printf("decrypted session key: %s\n", bin_to_hex((unsigned char *)session_key, parts[1].size()).data());
         // Loop for sending commands to server
         while (1)
@@ -131,7 +131,9 @@ int main(int argc, char *argv[])
                 sprintf(message, "%s:%s", command, username);
 
                 // encrypt command
-                char *payload = encrypt_data(message, strlen(message), session_key);
+                size_t ciphertextLength;
+                unsigned char *payload = encryptAES256(session_key, message, strlen(message), &ciphertextLength);
+                printf("sending payload recived aes: %s: %s\n", message, bin_to_hex(payload, 64).data());
 
                 // Send message to server
                 send(sock, payload, strlen(message), 0);
@@ -139,7 +141,7 @@ int main(int argc, char *argv[])
                 // Receive response from server
                 char buffer[MAX_COMMAND_LENGTH] = {0};
                 len = read(sock, buffer, MAX_COMMAND_LENGTH);
-                payload = decrypt_data(buffer, len, session_key);
+                payload = decryptAES256(session_key, reinterpret_cast<const unsigned char *>(buffer), len, &ciphertextLength);
 
                 printf("recived balance: %s\n", payload);
             }

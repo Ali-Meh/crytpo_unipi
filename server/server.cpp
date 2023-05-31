@@ -231,9 +231,13 @@ int main(int argc, char *argv[])
                             // generate session key
                             client_socket[i].session_key = generate_aes_key();
                             // encrypt with users pubkey
-                            sprintf(buffer, "SET_SESSION_KEY:%s\0", client_socket[i].session_key.data());
+                            sprintf(buffer, "SET_SESSION_KEY:%s\0", bin_to_hex((unsigned char *)client_socket[i].session_key.data(), client_socket[i].session_key.size()).data());
 
-                            printf("SET_SESSION_KEY:%s\n\r\0", bin_to_hex((unsigned char *)client_socket[i].session_key.data(), client_socket[i].session_key.size()).data());
+                            printf("decrypted session key: -> %s\n", buffer);
+                            // for (size_t j = 0; j < 32; ++j)
+                            // {
+                            //     printf("%02x", client_socket[i].session_key[j]);
+                            // }
                             string msg = encryptPubRSA(buffer, db_users[0].pubkey);
                             printf("session: %s\n", bin_to_hex((unsigned char *)msg.data(), msg.size()).data());
                             // send it over to user to use
@@ -243,8 +247,8 @@ int main(int argc, char *argv[])
                     else
                     { // it's symetric key decrypt via session key
                       // decrypt the payload recived
-                        size_t ciphertextLength;
-                        string decrypted(decryptAES256(reinterpret_cast<const unsigned char *>(client_socket[i].session_key.data()), (unsigned char *)buffer, valread, &ciphertextLength);
+                        size_t decryptedPlaintextLength;
+                        string decrypted(((char *)(decryptAES256(reinterpret_cast<const unsigned char *>(client_socket[i].session_key.data()), (unsigned char *)buffer, valread, &decryptedPlaintextLength))), decryptedPlaintextLength);
                         printf("decrypted recived aes: %s: %s\n", decrypted, bin_to_hex((unsigned char *)buffer, valread).data());
                         vector<string> parts = split(decrypted, ':');
                         // switch based on the command [0]
@@ -260,8 +264,9 @@ int main(int argc, char *argv[])
                             {
                                 printf("found user id %d\n", db_users[0].id);
                                 sprintf(buffer, "BALANCE: %d\0", db_users[0].balance);
-                                char *payload = encrypt_data((unsigned char *)buffer, strlen(buffer), (unsigned char *)client_socket[i].session_key.data());
-                                send(sd, payload, strlen(payload), 0);
+                                size_t ciphertextLength;
+                                char *payload = encryptAES256(reinterpret_cast<const unsigned char *>(client_socket[i].session_key.data()), (char *)buffer, strlen(buffer), &ciphertextLength);
+                                send(sd, payload, ciphertextLength, 0);
                             }
                         }
                         else if (strcmp(parts[0].data(), "transfer"))

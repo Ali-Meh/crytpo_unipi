@@ -85,8 +85,15 @@ int main(int argc, char *argv[])
         string decrypted = decryptPrvRSA(bufferStr, "../keys/sc102.pem");
         printf("decrypted: %s\n", decrypted.data());
         vector<string> parts = split(decrypted, ':');
-        session_key = reinterpret_cast<const unsigned char *>(parts[1].data());
-        printf("decrypted session key: %s\n", bin_to_hex((unsigned char *)session_key, parts[1].size()).data());
+        session_key = reinterpret_cast<const unsigned char *>(from_hex_string(parts[1]).data());
+        // printf("decrypted session key: %s\n", bin_to_hex((unsigned char *)session_key, parts[1].size() / 2).data());
+        printf("decrypted session key: %s --> ", bin_to_hex((unsigned char *)from_hex_string(parts[1]).data(), from_hex_string(parts[1]).size()));
+        for (size_t i = 0; i < 32; ++i)
+        {
+            printf("%02x", session_key[i]);
+        }
+        printf("\n");
+
         // Loop for sending commands to server
         while (1)
         {
@@ -127,13 +134,15 @@ int main(int argc, char *argv[])
                 // strtok(username, "\n");
 
                 // Construct balance message
-                char message[MAX_COMMAND_LENGTH + MAX_FIELD_LENGTH];
+                char message[MAX_COMMAND_LENGTH + MAX_FIELD_LENGTH] = {0};
                 sprintf(message, "%s:%s", command, username);
 
                 // encrypt command
-                size_t ciphertextLength;
-                unsigned char *payload = encryptAES256(session_key, message, strlen(message), &ciphertextLength);
-                printf("sending payload recived aes: %s: %s\n", message, bin_to_hex(payload, 64).data());
+                size_t ciphertextLength, dectextlength;
+                char *payload = encryptAES256(session_key, message, strlen(message), &ciphertextLength);
+                printf("sending payload recived aes: %s: %s --> %s \n", message, bin_to_hex(reinterpret_cast<unsigned char *>(payload), ciphertextLength).data(), payload);
+                char *dec = decryptAES256(session_key, reinterpret_cast<unsigned char *>(payload), ciphertextLength, &dectextlength);
+                printf("Decrypted Text: %.*s\n", static_cast<int>(dectextlength), dec);
 
                 // Send message to server
                 send(sock, payload, strlen(message), 0);

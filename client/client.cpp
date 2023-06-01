@@ -68,12 +68,12 @@ public:
         read(sock, buffer, MAX_MSG_LENGTH);
         printf("%s\n", buffer);
 
-        cout << "Enter Username:>> ";
-        getline(cin, username);
+        // cout << "Enter Username:>> ";
+        // getline(cin, username);
 
         cout << "Enter your private Key path:>> ";
-        string path;
-        getline(cin, path);
+        string path = "../keys/sc102.pem";
+        // getline(cin, path);
         client_private_key = load_private_key(path.c_str());
         if (!client_private_key)
         {
@@ -106,22 +106,20 @@ public:
 
         // read public key for user and concatnate with nonce
         // Allocate buffer for publickey
-        unsigned char *client_public_key = (unsigned char *)malloc(EVP_PKEY_size(client_private_key));
-        if (!client_public_key)
-        {
-            cerr << "Error allocating buffer for publickey\n";
-            close(sock);
-            exit(1);
-        }
-        size_t pub_len;
-        EVP_PKEY_get_raw_public_key(client_private_key, client_public_key, &pub_len);
+        size_t pub_len = 0;
+        unsigned char *client_public_key = extractPublicKey(client_private_key, pub_len);
 
         // Concatenate nonce and client's public key
         unsigned char *payload = (unsigned char *)malloc(NONCE_SIZE + pub_len);
         memcpy(payload, client_nonce, NONCE_SIZE);
         memcpy(payload + NONCE_SIZE, client_public_key, pub_len);
 
-        sendMessageWithSize(sock, payload, NONCE_SIZE + pub_len);
+        size_t cipher_len = 0;
+        unsigned char *encrypted_payload = encryptPubRSA(payload, pub_len + NONCE_SIZE, client_public_key, pub_len, cipher_len);
+
+        sendMessageWithSize(sock, encrypted_payload, cipher_len);
+
+        cout << cipher_len << " Sent: " << bin_to_hex(encrypted_payload, cipher_len).data() << endl;
 
         // Free
         free(client_nonce);

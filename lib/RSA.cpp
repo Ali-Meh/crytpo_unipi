@@ -112,14 +112,55 @@ free_all:
     return ret;
 }
 
-// void write_to_file(const char *filename, const char *data)
-// {
-//     FILE *file = fopen(filename, "wb");
-//     fwrite(data, strlen(data), 1, file);
-//     fclose(file);
-// }
+// Extracts the public key from EVP_PKEY as unsigned char*
+// Returns the public key data as an unsigned char* or nullptr on error
+unsigned char *extractPublicKey(EVP_PKEY *private_key, size_t &public_key_length)
+{
+    // Create a new BIO
+    BIO *bio = BIO_new(BIO_s_mem());
+    if (!bio)
+    {
+        fprintf(stderr, "Error creating BIO\n");
+        return nullptr;
+    }
 
-// Function to encrypt a message using RSA public key
+    // Write the public key data to the BIO
+    if (!PEM_write_bio_PUBKEY(bio, private_key))
+    {
+        fprintf(stderr, "Error writing public key to BIO\n");
+        BIO_free(bio);
+        return nullptr;
+    }
+
+    // Get the length of the public key data
+    long keyLength = BIO_pending(bio);
+    if (keyLength <= 0)
+    {
+        fprintf(stderr, "Error getting public key length\n");
+        BIO_free(bio);
+        return nullptr;
+    }
+
+    // Allocate memory for the public key data
+    unsigned char *publicKeyData = new unsigned char[keyLength];
+
+    // Read the public key data from the BIO into the memory buffer
+    if (BIO_read(bio, publicKeyData, keyLength) <= 0)
+    {
+        fprintf(stderr, "Error reading public key from BIO\n");
+        BIO_free(bio);
+        delete[] publicKeyData;
+        return nullptr;
+    }
+
+    // Clean up the BIO
+    BIO_free(bio);
+
+    // Update the output parameter with the public key length
+    public_key_length = static_cast<size_t>(keyLength);
+
+    return publicKeyData;
+}
 
 string encryptPubRSA(const string &message, const string &publicKeyPEM)
 {
@@ -155,6 +196,44 @@ string encryptPubRSA(const string &message, const string &publicKeyPEM)
     RSA_free(rsa);
 
     return string(reinterpret_cast<const char *>(encrypted.data()), result);
+}
+
+unsigned char *encryptPubRSA(unsigned char *message, size_t message_len, unsigned char *publicKeyPEM, size_t key_len, size_t &cipher_length)
+{
+    BIO *publicKeyBio = BIO_new_mem_buf(publicKeyPEM, key_len);
+    if (!publicKeyBio)
+    {
+        fprintf(stderr, "Error creating BIO for public key\n");
+        return nullptr;
+    }
+
+    RSA *rsaKey = PEM_read_bio_RSA_PUBKEY(publicKeyBio, nullptr, nullptr, nullptr);
+    if (!rsaKey)
+    {
+        fprintf(stderr, "Error reading public key\n");
+        BIO_free(publicKeyBio);
+        return nullptr;
+    }
+
+    int rsaSize = RSA_size(rsaKey);
+    unsigned char *ciphertext = new unsigned char[rsaSize];
+
+    int encryptedSize = RSA_public_encrypt(static_cast<int>(message_len), message, ciphertext, rsaKey, RSA_PKCS1_OAEP_PADDING);
+    if (encryptedSize == -1)
+    {
+        fprintf(stderr, "Error encrypting data: %s\n", ERR_error_string(ERR_get_error(), nullptr));
+        RSA_free(rsaKey);
+        BIO_free(publicKeyBio);
+        delete[] ciphertext;
+        return nullptr;
+    }
+
+    cipher_length = static_cast<size_t>(encryptedSize);
+
+    RSA_free(rsaKey);
+    BIO_free(publicKeyBio);
+
+    return ciphertext;
 }
 string encryptPubRSAFile(const string &message, const string &publicKeyPath)
 {

@@ -110,53 +110,93 @@ int sendMessageWithSize(int sd, string message)
     return 1;
 }
 
-int recieveSizedMessage(int sd, unsigned char *message)
+unsigned char *recieveSizedMessage(int sd, unsigned int *totalSizePtr)
 {
     // Read message size
-    unsigned int *totalSizePtr = (unsigned int *)malloc(sizeof(unsigned int));
     int ret = readInt(sd, totalSizePtr);
     if (!ret)
     {
         cerr << "Error reading message total size\n";
-        return 0;
+        return NULL;
     }
-    unsigned int messageLength = *totalSizePtr;
-    free(totalSizePtr);
+    unsigned char *message = (unsigned char *)malloc(*totalSizePtr);
 
-    ret = read(sd, message, messageLength);
+    ret = read(sd, message, *totalSizePtr);
     if (!ret)
     {
         cerr << "Error reading message\n";
-        return 0;
+        return NULL;
     }
 
-    return 1;
+    return message;
 }
 
 // Generate a random and fresh nonce
 int createNonce(unsigned char *buffer)
 {
+
+    int ret;
+
+    // Generate a 16 bytes random number to ensure unpredictability
+    unsigned char *randomBuf = (unsigned char *)malloc(RAND_BUFFER_SIZE);
+    if (!randomBuf)
+    {
+        cerr << "Error allocating unsigned buffer for random bytes\n";
+        return 0;
+    }
     RAND_poll();
-    // Generate a random number to ensure unpredictability
-    unsigned char randomBuf[TIME_BUFFER_SIZE];
-    if (RAND_bytes(randomBuf, RAND_BUFFER_SIZE) != 1)
+    ret = RAND_bytes(randomBuf, RAND_BUFFER_SIZE);
+    if (!ret)
     {
         cerr << "Error generating random bytes\n";
         return 0;
     }
+    char *random = (char *)malloc(RAND_BUFFER_SIZE);
+    if (!random)
+    {
+        cerr << "Error allocating buffer for random bytes *\n";
+        return 0;
+    }
+    memcpy(random, randomBuf, RAND_BUFFER_SIZE);
+    free(randomBuf);
 
-    // Get the current time as a timestamp
-    char now[TIME_BUFFER_SIZE];
-    std::time_t currentTime = std::time(nullptr);
-    std::strftime(now, TIME_BUFFER_SIZE, "%Y%j%H%M%S", std::localtime(&currentTime));
+    // Generate a char timestamp to ensure uniqueness
+    char *now = (char *)malloc(TIME_BUFFER_SIZE);
+    if (!now)
+    {
+        cerr << "Error allocating buffer for date and time\n";
+        return 0;
+    }
+    time_t currTime;
+    tm *currentTime;
+    time(&currTime);
+    currentTime = localtime(&currTime);
+    if (!currentTime)
+    {
+        cerr << "Error creating pointer containing current time\n";
+        return 0;
+    }
+    ret = strftime(now, TIME_BUFFER_SIZE, "%Y%j%H%M%S", currentTime);
+    if (!ret)
+    {
+        cerr << "Error putting time in a char array\n";
+        return 0;
+    }
 
-    // Concatenate random number and timestamp into the nonce
-    size_t randomBytesLength = std::min(RAND_BUFFER_SIZE, NONCE_SIZE - TIME_BUFFER_SIZE);
-    memcpy(buffer, randomBuf, randomBytesLength);
-    memcpy(buffer + randomBytesLength, now, TIME_BUFFER_SIZE - 1); // Exclude null-terminator
-
-    // Clear remaining bytes in the nonce buffer
-    memset(buffer + randomBytesLength + TIME_BUFFER_SIZE - 1, 0, NONCE_SIZE - randomBytesLength - TIME_BUFFER_SIZE + 1);
+    // Concatenate random number and timestamp
+    char *tempNonce = (char *)malloc(RAND_BUFFER_SIZE + TIME_BUFFER_SIZE);
+    if (!tempNonce)
+    {
+        cerr << "Error allocating char buffer for nonce\n";
+        return 0;
+    }
+    bzero(tempNonce, RAND_BUFFER_SIZE + TIME_BUFFER_SIZE);
+    memcpy(tempNonce, random, RAND_BUFFER_SIZE);
+    free(random);
+    strcat(tempNonce, now);
+    free(now);
+    memcpy(buffer, tempNonce, NONCE_SIZE);
+    free(tempNonce);
 
     return 1;
 }

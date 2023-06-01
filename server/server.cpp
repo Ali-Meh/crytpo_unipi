@@ -181,6 +181,12 @@ public:
 
                 if (FD_ISSET(sd, &readfds))
                 {
+
+                    unsigned int *totalSizePtr = (unsigned int *)malloc(sizeof(unsigned int));
+
+                    unsigned char *message = recieveSizedMessage(sd, totalSizePtr);
+                    cout << totalSizePtr << "Received: " << bin_to_hex(message, *totalSizePtr).data() << endl;
+                    exit(1);
                     // // Check if it was for closing , and also read the
                     // // incoming message
                     // memset(buffer, '\0', sizeof(buffer));

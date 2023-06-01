@@ -39,3 +39,76 @@ string from_hex_string(const string &hex_str)
     }
     return result;
 }
+
+int sendInt(int socketfd, unsigned int n)
+{
+
+    int ret;
+
+    ret = send(socketfd, (char *)&n, sizeof(n), 0);
+    if (ret < 0)
+    {
+        cerr << "Error sending int\n";
+        return 0;
+    }
+
+    return 1;
+}
+
+int readInt(int socketfd, unsigned int *n)
+{
+
+    int ret;
+
+    ret = read(socketfd, (char *)n, sizeof(unsigned int));
+    if (ret < 0)
+    {
+        cerr << "Error reading int\n";
+        return 0;
+    }
+
+    return 1;
+}
+
+int sendMessageWithSize(int sd, unsigned char *message, int messageLength)
+{
+    int ret;
+
+    ret = sendInt(sd, messageLength);
+    if (!ret)
+    {
+        cerr << "Error writing message total size\n";
+        return 0;
+    }
+    ret = send(sd, message, messageLength, 0);
+    if (!ret)
+    {
+        cerr << "Error writing message\n";
+        return 0;
+    }
+
+    return 1;
+}
+
+int recieveSizedMessage(int sd, unsigned char *message)
+{
+    // Read message size
+    unsigned int *totalSizePtr = (unsigned int *)malloc(sizeof(unsigned int));
+    int ret = readInt(sd, totalSizePtr);
+    if (!ret)
+    {
+        cerr << "Error reading message total size\n";
+        return 0;
+    }
+    unsigned int messageLength = *totalSizePtr;
+    free(totalSizePtr);
+
+    ret = read(sd, message, messageLength);
+    if (!ret)
+    {
+        cerr << "Error reading message\n";
+        return 0;
+    }
+
+    return 1;
+}

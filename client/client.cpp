@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     {
         int sock = 0;
         struct sockaddr_in serv_addr;
-        const unsigned char *session_key;
+        unsigned char *session_key;
 
         // Create socket
         if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -85,14 +85,9 @@ int main(int argc, char *argv[])
         string decrypted = decryptPrvRSA(bufferStr, "../keys/sc102.pem");
         printf("decrypted: %s\n", decrypted.data());
         vector<string> parts = split(decrypted, ':');
-        session_key = reinterpret_cast<const unsigned char *>(from_hex_string(parts[1]).data());
+        session_key = (unsigned char *)(from_hex_string(parts[1]).data());
         // printf("decrypted session key: %s\n", bin_to_hex((unsigned char *)session_key, parts[1].size() / 2).data());
-        printf("decrypted session key: %s --> ", bin_to_hex((unsigned char *)from_hex_string(parts[1]).data(), from_hex_string(parts[1]).size()));
-        for (size_t i = 0; i < 32; ++i)
-        {
-            printf("%02x", session_key[i]);
-        }
-        printf("\n");
+        // printf("decrypted session key: %s", bin_to_hex((unsigned char *)from_hex_string(parts[1]).data(), from_hex_string(parts[1]).size()).data());
 
         // Loop for sending commands to server
         while (1)
@@ -139,18 +134,20 @@ int main(int argc, char *argv[])
 
                 // encrypt command
                 size_t ciphertextLength, dectextlength;
-                char *payload = encryptAES256(session_key, message, strlen(message), &ciphertextLength);
-                printf("sending payload recived aes: %s: %s --> %s \n", message, bin_to_hex(reinterpret_cast<unsigned char *>(payload), ciphertextLength).data(), payload);
-                char *dec = decryptAES256(session_key, reinterpret_cast<unsigned char *>(payload), ciphertextLength, &dectextlength);
-                printf("Decrypted Text: %.*s\n", static_cast<int>(dectextlength), dec);
+                unsigned char *ciphertext = (unsigned char *)malloc(BUFFER_SIZE);
+                ciphertextLength = encryptSym((unsigned char *)message, strlen(message), ciphertext, session_key);
+                printf("sending payload aes %d Encrypted: %s :=> %s \n", ciphertextLength, message, bin_to_hex(ciphertext, ciphertextLength + ivSize).data());
+                unsigned char *decodeText = (unsigned char *)malloc(BUFFER_SIZE);
+                dectextlength = decryptSym(ciphertext, ciphertextLength, decodeText, session_key);
+                printf("Decrypted Text: %.*s\n", static_cast<int>(dectextlength), decodeText);
 
                 // Send message to server
-                send(sock, payload, strlen(message), 0);
+                send(sock, ciphertext, ciphertextLength + ivSize, 0);
 
                 // Receive response from server
                 char buffer[MAX_COMMAND_LENGTH] = {0};
                 len = read(sock, buffer, MAX_COMMAND_LENGTH);
-                payload = decryptAES256(session_key, reinterpret_cast<const unsigned char *>(buffer), len, &ciphertextLength);
+                dectextlength = decryptSym((unsigned char *)(payload.data()), ciphertextLength, decodeText, session_key);
 
                 printf("recived balance: %s\n", payload);
             }

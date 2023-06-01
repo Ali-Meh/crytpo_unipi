@@ -310,11 +310,11 @@ void updateClient(sqlite3 *db, const sba_client_t &client)
     std::cout << "Client " << client.id << " updated successfully!" << std::endl;
 }
 
-sqlite3 *connect(char *file = "SBA.db")
+sqlite3 *connect(string file = "SBA.db")
 {
     sqlite3 *db;
     int exit = 0;
-    exit = sqlite3_open(file, &db);
+    exit = sqlite3_open(file.data(), &db);
     if (exit)
     {
 

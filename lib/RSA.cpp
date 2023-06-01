@@ -9,15 +9,26 @@ using namespace std;
 const char *PUB_FILE = "pub.pem";
 const char *PRV_FILE = "prv.pem";
 
-RSA *load_private_key(const char *filename = PRV_FILE)
+// RSA *load_private_key(const char *filename = PRV_FILE)
+// {
+//     FILE *file = fopen(filename, "rb");
+//     if (file == NULL)
+//     {
+//         printf("load_private_key: couldn't load file: %s\n", filename);
+//         return NULL;
+//     }
+//     RSA *keypair = PEM_read_RSAPrivateKey(file, nullptr, nullptr, nullptr);
+//     fclose(file);
+//     return keypair;
+// }
+EVP_PKEY *load_private_key(const char *filename = PRV_FILE, char *password = nullptr)
 {
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
     {
-        printf("load_private_key: couldn't load file: %s\n", filename);
         return NULL;
     }
-    RSA *keypair = PEM_read_RSAPrivateKey(file, nullptr, nullptr, nullptr);
+    EVP_PKEY *keypair = PEM_read_PrivateKey(file, nullptr, nullptr, password);
     fclose(file);
     return keypair;
 }

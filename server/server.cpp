@@ -181,117 +181,117 @@ public:
 
                 if (FD_ISSET(sd, &readfds))
                 {
-                    // Check if it was for closing , and also read the
-                    // incoming message
-                    memset(buffer, '\0', sizeof(buffer));
-                    if ((valread = read(sd, buffer, BUFFER_SIZE)) == 0)
-                    {
-                        // Somebody disconnected , get his details and print
-                        getpeername(sd, (struct sockaddr *)&address,
-                                    (socklen_t *)&addrlen);
-                        printf("Host disconnected , ip %s , port %d \n",
-                               inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+                    // // Check if it was for closing , and also read the
+                    // // incoming message
+                    // memset(buffer, '\0', sizeof(buffer));
+                    // if ((valread = read(sd, buffer, BUFFER_SIZE)) == 0)
+                    // {
+                    //     // Somebody disconnected , get his details and print
+                    //     getpeername(sd, (struct sockaddr *)&address,
+                    //                 (socklen_t *)&addrlen);
+                    //     printf("Host disconnected , ip %s , port %d \n",
+                    //            inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
-                        // Close the socket and mark as 0 in list for reuse
-                        close_and_free_socket(client_sockets[i]);
-                    }
+                    //     // Close the socket and mark as 0 in list for reuse
+                    //     close_and_free_socket(client_sockets[i]);
+                    // }
 
-                    // Process Messages
-                    else
-                    {
-                        // set the string terminating NULL byte on the end
-                        // of the data read
-                        // buffer[valread] = '\0';
-                        // Parse the message
-                        string message(buffer, valread);
-                        // printf("Message: %s\n", message);
+                    // // Process Messages
+                    // else
+                    // {
+                    //     // set the string terminating NULL byte on the end
+                    //     // of the data read
+                    //     // buffer[valread] = '\0';
+                    //     // Parse the message
+                    //     string message(buffer, valread);
+                    //     // printf("Message: %s\n", message);
 
-                        if (client_sockets[i].session_key.empty())
-                        { // it's login request decrypt via pub/prv keys
-                            string decrypted = decryptPrvRSA(message, "../prv.pem");
-                            printf("command Received: %s\n\r", decrypted.c_str());
-                            vector<string> parts = split(decrypted, ':');
-                            if (strcmp(parts[0].c_str(), "login") != 0)
-                            {
-                                sprintf(buffer, "ERROR: %s\0", "unathorized!");
-                                send(sd, buffer, 0, 0);
-                                close_and_free_socket(client_sockets[i]);
-                            }
+                    //     if (client_sockets[i].session_key.empty())
+                    //     { // it's login request decrypt via pub/prv keys
+                    //         string decrypted = decryptPrvRSA(message, "../prv.pem");
+                    //         printf("command Received: %s\n\r", decrypted.c_str());
+                    //         vector<string> parts = split(decrypted, ':');
+                    //         if (strcmp(parts[0].c_str(), "login") != 0)
+                    //         {
+                    //             sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                    //             send(sd, buffer, 0, 0);
+                    //             close_and_free_socket(client_sockets[i]);
+                    //         }
 
-                            vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
-                            printf("found user id %d\n", db_users[0].id);
-                            if (db_users.empty() || !verify_password(parts[2], db_users[0].password))
-                            {
-                                sprintf(buffer, "ERROR: %s\0", "unathorized!");
-                                printf("wrote %d bytes to buffer, %s\n", strlen(buffer), buffer);
-                                send(sd, buffer, strlen(buffer), 0);
-                                close_and_free_socket(client_sockets[i]);
-                            }
-                            else
-                            {
-                                // generate session key
-                                client_sockets[i].session_key = generate_aes_key();
-                                // encrypt with users pubkey
-                                sprintf(buffer, "SET_SESSION_KEY:%s\0", bin_to_hex((unsigned char *)client_sockets[i].session_key.data(), client_sockets[i].session_key.size()).data());
+                    //         vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
+                    //         printf("found user id %d\n", db_users[0].id);
+                    //         if (db_users.empty() || !verify_password(parts[2], db_users[0].password))
+                    //         {
+                    //             sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                    //             printf("wrote %d bytes to buffer, %s\n", strlen(buffer), buffer);
+                    //             send(sd, buffer, strlen(buffer), 0);
+                    //             close_and_free_socket(client_sockets[i]);
+                    //         }
+                    //         else
+                    //         {
+                    //             // generate session key
+                    //             client_sockets[i].session_key = generate_aes_key();
+                    //             // encrypt with users pubkey
+                    //             sprintf(buffer, "SET_SESSION_KEY:%s\0", bin_to_hex((unsigned char *)client_sockets[i].session_key.data(), client_sockets[i].session_key.size()).data());
 
-                                printf("decrypted session key: -> %s\n", buffer);
-                                // for (size_t j = 0; j < 32; ++j)
-                                // {
-                                //     printf("%02x", client_socket[i].session_key[j]);
-                                // }
-                                string msg = encryptPubRSA(buffer, db_users[0].pubkey);
-                                // printf("session: %s\n", bin_to_hex((unsigned char *)msg.data(), msg.size()).data());
-                                // send it over to user to use
-                                send(sd, msg.c_str(), msg.size(), 0);
-                            }
-                        }
-                        else
-                        { // it's symetric key decrypt via session key
-                            // decrypt the payload recived
-                            // unsigned char *message = (unsigned char *)malloc(BUFFER_SIZE);
-                            // size_t decryptedPlaintextLength = decryptSym((unsigned char *)buffer, valread - ivSize, message, (unsigned char *)client_sockets[i].session_key.data());
-                            unsigned char *decodeText = (unsigned char *)malloc(BUFFER_SIZE);
-                            size_t decryptedPlaintextLength = decryptSym(reinterpret_cast<unsigned char *>(buffer), valread - ivSize, decodeText, (unsigned char *)client_sockets[i].session_key.data());
-                            printf("Decrypted Text: %s\n", (char *)decodeText);
+                    //             printf("decrypted session key: -> %s\n", buffer);
+                    //             // for (size_t j = 0; j < 32; ++j)
+                    //             // {
+                    //             //     printf("%02x", client_socket[i].session_key[j]);
+                    //             // }
+                    //             string msg = encryptPubRSA(buffer, db_users[0].pubkey);
+                    //             // printf("session: %s\n", bin_to_hex((unsigned char *)msg.data(), msg.size()).data());
+                    //             // send it over to user to use
+                    //             send(sd, msg.c_str(), msg.size(), 0);
+                    //         }
+                    //     }
+                    //     else
+                    //     { // it's symetric key decrypt via session key
+                    //         // decrypt the payload recived
+                    //         // unsigned char *message = (unsigned char *)malloc(BUFFER_SIZE);
+                    //         // size_t decryptedPlaintextLength = decryptSym((unsigned char *)buffer, valread - ivSize, message, (unsigned char *)client_sockets[i].session_key.data());
+                    //         unsigned char *decodeText = (unsigned char *)malloc(BUFFER_SIZE);
+                    //         size_t decryptedPlaintextLength = decryptSym(reinterpret_cast<unsigned char *>(buffer), valread - ivSize, decodeText, (unsigned char *)client_sockets[i].session_key.data());
+                    //         printf("Decrypted Text: %s\n", (char *)decodeText);
 
-                            string decrypted(*decodeText, decryptedPlaintextLength);
-                            printf("decrypted recived aes: %s: %s\n", decodeText, bin_to_hex((unsigned char *)buffer, valread).data());
-                            vector<string> parts = split(decrypted, ':');
-                            // switch based on the command [0]
-                            if (strcmp(parts[0].data(), "balance"))
-                            {
-                                vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
-                                if (db_users.empty())
-                                {
-                                    sprintf(buffer, "ERROR: %s\0", "unathorized!");
-                                    send(sd, buffer, 0, 0);
-                                }
-                                else
-                                {
-                                    printf("found user id %d\n", db_users[0].id);
-                                    sprintf(buffer, "BALANCE: %d\0", db_users[0].balance);
-                                    unsigned char *payload = (unsigned char *)malloc(BUFFER_SIZE);
-                                    size_t ciphertextLength = encryptSym((unsigned char *)buffer, strlen(buffer), payload, (unsigned char *)client_sockets[i].session_key.data());
-                                    send(sd, payload, ciphertextLength, 0);
-                                }
-                            }
-                            else if (strcmp(parts[0].data(), "transfer"))
-                            {
-                                cerr << "TODO:TRANSFER";
-                            }
-                            else
-                            {
-                                cerr << "TODO:ELSE";
-                            }
+                    //         string decrypted(*decodeText, decryptedPlaintextLength);
+                    //         printf("decrypted recived aes: %s: %s\n", decodeText, bin_to_hex((unsigned char *)buffer, valread).data());
+                    //         vector<string> parts = split(decrypted, ':');
+                    //         // switch based on the command [0]
+                    //         if (strcmp(parts[0].data(), "balance"))
+                    //         {
+                    //             vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
+                    //             if (db_users.empty())
+                    //             {
+                    //                 sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                    //                 send(sd, buffer, 0, 0);
+                    //             }
+                    //             else
+                    //             {
+                    //                 printf("found user id %d\n", db_users[0].id);
+                    //                 sprintf(buffer, "BALANCE: %d\0", db_users[0].balance);
+                    //                 unsigned char *payload = (unsigned char *)malloc(BUFFER_SIZE);
+                    //                 size_t ciphertextLength = encryptSym((unsigned char *)buffer, strlen(buffer), payload, (unsigned char *)client_sockets[i].session_key.data());
+                    //                 send(sd, payload, ciphertextLength, 0);
+                    //             }
+                    //         }
+                    //         else if (strcmp(parts[0].data(), "transfer"))
+                    //         {
+                    //             cerr << "TODO:TRANSFER";
+                    //         }
+                    //         else
+                    //         {
+                    //             cerr << "TODO:ELSE";
+                    //         }
 
-                            // encrypt and send back the response
-                        }
+                    //         // encrypt and send back the response
+                    //     }
 
-                        // vector<string> parts = split(message, ':');
-                        // printf("%s command Received\n\r", parts[0].c_str());
-                        // sprintf(buffer, "%s %s\n", "recived: ", message.c_str());
-                        // send(sd, buffer, strlen(buffer) + 10, 0);
-                    }
+                    //     // vector<string> parts = split(message, ':');
+                    //     // printf("%s command Received\n\r", parts[0].c_str());
+                    //     // sprintf(buffer, "%s %s\n", "recived: ", message.c_str());
+                    //     // send(sd, buffer, strlen(buffer) + 10, 0);
+                    // }
                 }
             }
         }

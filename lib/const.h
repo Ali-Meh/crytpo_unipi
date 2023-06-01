@@ -5,7 +5,18 @@
 
 #define BUFFER_SIZE 1025
 
+// Authentication constants
+#define RAND_BUFFER_SIZE 16
+#define TIME_BUFFER_SIZE 64
+#define NONCE_SIZE 29
+
 #define SERVER_PORT 8080
+#define SERVER_ADDR "127.0.0.1"
 
 #define TRUE 1
 #define FALSE 0
+
+// Client
+#define MAX_COMMAND_LENGTH 128
+#define MAX_FIELD_LENGTH 255
+#define MAX_MSG_LENGTH 1024

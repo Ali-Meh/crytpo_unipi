@@ -2,6 +2,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include "const.h"
 
 using namespace std;
 
@@ -89,6 +90,25 @@ int sendMessageWithSize(int sd, unsigned char *message, int messageLength)
 
     return 1;
 }
+int sendMessageWithSize(int sd, string message)
+{
+    int ret;
+    int msgLength = message.size();
+    ret = sendInt(sd, msgLength);
+    if (!ret)
+    {
+        cerr << "Error writing message total size\n";
+        return 0;
+    }
+    ret = send(sd, message.c_str(), msgLength, 0);
+    if (!ret)
+    {
+        cerr << "Error writing message\n";
+        return 0;
+    }
+
+    return 1;
+}
 
 int recieveSizedMessage(int sd, unsigned char *message)
 {
@@ -109,6 +129,34 @@ int recieveSizedMessage(int sd, unsigned char *message)
         cerr << "Error reading message\n";
         return 0;
     }
+
+    return 1;
+}
+
+// Generate a random and fresh nonce
+int createNonce(unsigned char *buffer)
+{
+    RAND_poll();
+    // Generate a random number to ensure unpredictability
+    unsigned char randomBuf[TIME_BUFFER_SIZE];
+    if (RAND_bytes(randomBuf, RAND_BUFFER_SIZE) != 1)
+    {
+        cerr << "Error generating random bytes\n";
+        return 0;
+    }
+
+    // Get the current time as a timestamp
+    char now[TIME_BUFFER_SIZE];
+    std::time_t currentTime = std::time(nullptr);
+    std::strftime(now, TIME_BUFFER_SIZE, "%Y%j%H%M%S", std::localtime(&currentTime));
+
+    // Concatenate random number and timestamp into the nonce
+    size_t randomBytesLength = std::min(RAND_BUFFER_SIZE, NONCE_SIZE - TIME_BUFFER_SIZE);
+    memcpy(buffer, randomBuf, randomBytesLength);
+    memcpy(buffer + randomBytesLength, now, TIME_BUFFER_SIZE - 1); // Exclude null-terminator
+
+    // Clear remaining bytes in the nonce buffer
+    memset(buffer + randomBytesLength + TIME_BUFFER_SIZE - 1, 0, NONCE_SIZE - randomBytesLength - TIME_BUFFER_SIZE + 1);
 
     return 1;
 }

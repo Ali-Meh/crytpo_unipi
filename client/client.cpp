@@ -26,6 +26,7 @@ class Client
     string username; //, user_pub_key_path, user_prv_key_path;
 
     EVP_PKEY *client_private_key;
+    RSA *server_public_key;
 
     // Available commands
     vector<string> commands = {"login", "balance", "transfer", "transactions"};
@@ -33,12 +34,47 @@ class Client
     string current_command;
 
 public:
+    Client()
+    {
+        // cout << "Enter Username:>> ";
+        // getline(cin, username);
+
+        cout << "Enter your private Key path:>> ";
+        string path = "../keys/sc102.pem";
+        // getline(cin, path);
+        client_private_key = load_private_key(path.c_str());
+        if (!client_private_key)
+        {
+            cerr << "Error could not load user's private key\n";
+            close(sock);
+            exit(1);
+        }
+
+        // cout << "Enter your public Key path:>> ";
+        // path = "../keys/pc102.pem";
+        // // getline(cin, path);
+        // RSA *client_public_key = load_public_key(path.c_str());
+        // if (!client_public_key)
+        // {
+        //     cerr << "Error could not load user's private key\n";
+        //     close(sock);
+        //     exit(1);
+        // }
+
+        cout << "Enter server public Key path:>> ";
+        path = "../pub.pem";
+        // getline(cin, path);
+        server_public_key = load_public_key(path.c_str());
+        if (!server_public_key)
+        {
+            cerr << "\nError could not load server's public key\n";
+            close(sock);
+            exit(1);
+        }
+    }
     // establish connection with server
     void establish_connection()
     {
-
-        int ret;
-
         // Create socket
         if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         {
@@ -67,20 +103,6 @@ public:
         char buffer[MAX_MSG_LENGTH] = {0};
         read(sock, buffer, MAX_MSG_LENGTH);
         printf("%s\n", buffer);
-
-        // cout << "Enter Username:>> ";
-        // getline(cin, username);
-
-        cout << "Enter your private Key path:>> ";
-        string path = "../keys/sc102.pem";
-        // getline(cin, path);
-        client_private_key = load_private_key(path.c_str());
-        if (!client_private_key)
-        {
-            cerr << "Error could not load user's private key\n";
-            close(sock);
-            return exit(1);
-        }
     }
 
     // Create and send challenge to the server M1
@@ -126,18 +148,105 @@ public:
         free(client_public_key);
         free(payload);
     }
+
+    void exchange_keys()
+    {
+        // Generate client's DH parameters
+        DH *dhParams = DH_new();
+        if (!dhParams)
+        {
+            fprintf(stderr, "Error generating DH parameters\n");
+            return;
+        }
+        if (!DH_generate_parameters_ex(dhParams, 256, DH_GENERATOR_2, nullptr))
+        {
+            fprintf(stderr, "Error generating DH parameters\n");
+            DH_free(dhParams);
+            return;
+        }
+
+        // Generate client's public-private key pair
+        if (!DH_generate_key(dhParams))
+        {
+            fprintf(stderr, "Error generating client's DH key pair\n");
+            DH_free(dhParams);
+            return;
+        }
+
+        // Encode client's public key to PEM format
+        BIO *clientPublicKeyBio = BIO_new(BIO_s_mem());
+        if (!clientPublicKeyBio)
+        {
+            fprintf(stderr, "Error creating BIO for client's public key\n");
+            DH_free(dhParams);
+            return;
+        }
+        if (!PEM_write_bio_DHparams(clientPublicKeyBio, dhParams))
+        {
+            fprintf(stderr, "Error encoding client's public key\n");
+            BIO_free(clientPublicKeyBio);
+            DH_free(dhParams);
+            return;
+        }
+
+        char *clientPublicKeyPEM;
+        size_t clientPublicKeyPEMLen = BIO_get_mem_data(clientPublicKeyBio, &clientPublicKeyPEM);
+
+        // Load server's public RSA key from PEM format
+        // RSA *serverPublicKey = load_public_key(client_private_key)
+        // BIO *serverPublicKeyBio = BIO_new_mem_buf(serverPublicKey, static_cast<int>(serverPublicKeyLen));
+        // if (!serverPublicKeyBio)
+        // {
+        //     fprintf(stderr, "Error creating BIO for server's public key\n");
+        //     BIO_free(clientPublicKeyBio);
+        //     DH_free(dhParams);
+        //     return;
+        // }
+        // RSA *serverPublicKey = PEM_read_bio_RSA_PUBKEY(serverPublicKeyBio, nullptr, nullptr, nullptr);
+        // if (!serverPublicKey)
+        // {
+        //     fprintf(stderr, "Error reading server's public key\n");
+        //     BIO_free(clientPublicKeyBio);
+        //     BIO_free(serverPublicKeyBio);
+        //     DH_free(dhParams);
+        //     return;
+        // }
+
+        // Encrypt client's public key with server's RSA public key
+        unsigned char encryptedKey[RSA_size(server_public_key)];
+        int encryptedKeyLen = RSA_public_encrypt(static_cast<int>(clientPublicKeyPEMLen),
+                                                 reinterpret_cast<const unsigned char *>(clientPublicKeyPEM),
+                                                 encryptedKey, server_public_key, RSA_PKCS1_PADDING);
+        if (encryptedKeyLen == -1)
+        {
+            fprintf(stderr, "Error encrypting client's public key\n");
+            BIO_free(clientPublicKeyBio);
+            DH_free(dhParams);
+            return;
+        }
+
+        // Send encryptedKey to the server (e.g., over network)
+        sendMessageWithSize(sock, encryptedKey, encryptedKeyLen);
+
+        // Cleanup
+        BIO_free(clientPublicKeyBio);
+        DH_free(dhParams);
+    }
 };
 
 int main()
 {
-    int ret;
+    // int ret;
     Client user1;
 
     cout << "Starting client, waiting for server to be available...\n";
     user1.establish_connection();
     cout << "Client successfuly connected to the server\n";
 
-    user1.createAndSendEncryptedChallenge();
+    // user1.createAndSendEncryptedChallenge();
+    // cout << "Challenge sent to the server\n";
+
+    user1.exchange_keys();
     cout << "Challenge sent to the server\n";
 }
 /*

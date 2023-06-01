@@ -41,7 +41,7 @@ RSA *load_public_key(const char *filename = PUB_FILE)
         printf("WARN|load_public_key: couldn't load file: %s\n", filename);
         return NULL;
     }
-    RSA *keypair = PEM_read_RSA_PUBKEY(file, nullptr, nullptr, nullptr);
+    RSA *keypair = PEM_read_RSAPublicKey(file, nullptr, nullptr, nullptr);
     fclose(file);
     return keypair;
 }

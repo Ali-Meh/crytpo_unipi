@@ -35,6 +35,8 @@ class Server
     const static int max_clients = 30;
     int master_socket, addrlen, new_socket, activity, i, valread, sd, max_sd;
     sba_client_conn client_sockets[max_clients];
+    EVP_PKEY *private_key;
+
     // set of socket descriptors
     fd_set readfds;
     sqlite3 *db;
@@ -60,6 +62,15 @@ public:
         {
             client_sockets[i].in_use = false;
             client_sockets[i].sd = 0;
+        }
+
+        string path = "../prv.pem";
+        // getline(cin, path);
+        private_key = load_private_key(path.c_str());
+        if (!private_key)
+        {
+            cerr << "Error could not load servers's private key\n";
+            exit(1);
         }
     }
 
@@ -185,7 +196,12 @@ public:
                     unsigned int *totalSizePtr = (unsigned int *)malloc(sizeof(unsigned int));
 
                     unsigned char *message = recieveSizedMessage(sd, totalSizePtr);
-                    cout << totalSizePtr << "Received: " << bin_to_hex(message, *totalSizePtr).data() << endl;
+                    cout << *totalSizePtr << "bits Received: " << bin_to_hex(message, *totalSizePtr).data() << endl;
+                    size_t decrypted_len;
+                    unsigned char *decrypted = decryptPrvRSA(message, *totalSizePtr, private_key, decrypted_len);
+                    cout << decrypted_len << "bits Decrypted: \n"
+                         << string((char *)decrypted, decrypted_len)
+                         << endl;
                     exit(1);
                     // // Check if it was for closing , and also read the
                     // // incoming message

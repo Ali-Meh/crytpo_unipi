@@ -192,25 +192,8 @@ public:
         char *clientPublicKeyPEM;
         size_t clientPublicKeyPEMLen = BIO_get_mem_data(clientPublicKeyBio, &clientPublicKeyPEM);
 
-        // Load server's public RSA key from PEM format
-        // RSA *serverPublicKey = load_public_key(client_private_key)
-        // BIO *serverPublicKeyBio = BIO_new_mem_buf(serverPublicKey, static_cast<int>(serverPublicKeyLen));
-        // if (!serverPublicKeyBio)
-        // {
-        //     fprintf(stderr, "Error creating BIO for server's public key\n");
-        //     BIO_free(clientPublicKeyBio);
-        //     DH_free(dhParams);
-        //     return;
-        // }
-        // RSA *serverPublicKey = PEM_read_bio_RSA_PUBKEY(serverPublicKeyBio, nullptr, nullptr, nullptr);
-        // if (!serverPublicKey)
-        // {
-        //     fprintf(stderr, "Error reading server's public key\n");
-        //     BIO_free(clientPublicKeyBio);
-        //     BIO_free(serverPublicKeyBio);
-        //     DH_free(dhParams);
-        //     return;
-        // }
+        cout << clientPublicKeyPEMLen << "plain text payload: \n"
+             << clientPublicKeyPEM << endl;
 
         // Encrypt client's public key with server's RSA public key
         unsigned char encryptedKey[RSA_size(server_public_key)];
@@ -247,7 +230,7 @@ int main()
     // cout << "Challenge sent to the server\n";
 
     user1.exchange_keys();
-    cout << "Challenge sent to the server\n";
+    cout << "Exchanged keys Succesfully.\n";
 }
 /*
 int main(int argc, char *argv[])

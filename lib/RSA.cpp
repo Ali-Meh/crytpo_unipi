@@ -305,3 +305,99 @@ string decryptPrvRSA(const string &encryptedMessage, const string &privateKeyPat
 
     return string(reinterpret_cast<const char *>(decrypted.data()), result);
 }
+unsigned char *decryptPrvRSA(unsigned char *cipher, size_t cipher_len, EVP_PKEY *privateKey, size_t &decrypted_len)
+{
+    if (!cipher || cipher_len == 0 || !privateKey)
+    {
+        fprintf(stderr, "Invalid input parameters\n");
+        return nullptr;
+    }
+
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(privateKey, nullptr);
+    if (!ctx)
+    {
+        fprintf(stderr, "Error creating EVP_PKEY_CTX\n");
+        return nullptr;
+    }
+
+    if (EVP_PKEY_decrypt_init(ctx) <= 0)
+    {
+        fprintf(stderr, "Error initializing RSA decryption\n");
+        EVP_PKEY_CTX_free(ctx);
+        return nullptr;
+    }
+
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+    {
+        fprintf(stderr, "Error setting RSA padding\n");
+        EVP_PKEY_CTX_free(ctx);
+        return nullptr;
+    }
+
+    size_t outlen;
+    if (EVP_PKEY_decrypt(ctx, nullptr, &outlen, cipher, cipher_len) <= 0)
+    {
+        fprintf(stderr, "Error getting decrypted output length\n");
+        EVP_PKEY_CTX_free(ctx);
+        return nullptr;
+    }
+
+    unsigned char *decrypted = new unsigned char[outlen];
+    if (!decrypted)
+    {
+        fprintf(stderr, "Error allocating memory for decrypted data\n");
+        EVP_PKEY_CTX_free(ctx);
+        return nullptr;
+    }
+
+    if (EVP_PKEY_decrypt(ctx, decrypted, &outlen, cipher, cipher_len) <= 0)
+    {
+        fprintf(stderr, "Error decrypting RSA data\n");
+        delete[] decrypted;
+        EVP_PKEY_CTX_free(ctx);
+        return nullptr;
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    decrypted_len = outlen;
+    return decrypted;
+}
+
+unsigned char *calculateSharedSecret(DH *dhParams, const unsigned char *publicKey, size_t publicKeyLen, size_t &sharedSecretLen)
+{
+    if (!dhParams || !publicKey || publicKeyLen == 0)
+    {
+        fprintf(stderr, "Invalid input parameters\n");
+        return nullptr;
+    }
+
+    DH_set0_key(dhParams, nullptr, BN_bin2bn(publicKey, static_cast<int>(publicKeyLen), nullptr));
+
+    if (DH_generate_key(dhParams) != 1)
+    {
+        fprintf(stderr, "Error generating DH key pair\n");
+        return nullptr;
+    }
+
+    const BIGNUM *pubKey = nullptr;
+    DH_get0_key(dhParams, &pubKey, nullptr);
+
+    size_t secretLen = DH_size(dhParams);
+    unsigned char *sharedSecret = new unsigned char[secretLen];
+    if (!sharedSecret)
+    {
+        fprintf(stderr, "Error allocating memory for shared secret\n");
+        return nullptr;
+    }
+
+    int sharedSecretLenCalc = DH_compute_key(sharedSecret, pubKey, dhParams);
+    if (sharedSecretLenCalc < 0)
+    {
+        fprintf(stderr, "Error computing shared secret\n");
+        delete[] sharedSecret;
+        return nullptr;
+    }
+
+    sharedSecretLen = static_cast<size_t>(sharedSecretLenCalc);
+    return sharedSecret;
+}

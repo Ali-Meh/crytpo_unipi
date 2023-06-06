@@ -41,7 +41,7 @@ unsigned char *deriveSharedKey(EVP_PKEY *ec_key, EVP_PKEY *peer_pubkey, size_t *
 }
 
 // Generate Elliptic Curve Diffie-Hellman key pair
-EVP_PKEY *generateECDHKey()
+EVP_PKEY *generateECDHEVP_PKEY()
 {
     EVP_PKEY *ec_key = EVP_PKEY_new();
     EVP_PKEY_set_type(ec_key, EVP_PKEY_EC);
@@ -51,6 +51,46 @@ EVP_PKEY *generateECDHKey()
     EVP_PKEY_keygen(ctx, &ec_key);
     EVP_PKEY_CTX_free(ctx);
     return ec_key;
+}
+EC_KEY *generateECDHEC_KEY()
+{
+    // Create a new EC_KEY object
+    EC_KEY *key = EC_KEY_new();
+    if (!key)
+    {
+        cerr << "Failed to create EC_KEY object" << endl;
+        return nullptr;
+    }
+
+    // Generate the EC key parameters
+    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+    if (!group)
+    {
+        cerr << "Failed to create EC_GROUP object" << endl;
+        EC_KEY_free(key);
+        return nullptr;
+    }
+
+    if (EC_KEY_set_group(key, group) != 1)
+    {
+        cerr << "Failed to set EC_GROUP for EC_KEY" << endl;
+        EC_GROUP_free(group);
+        EC_KEY_free(key);
+        return nullptr;
+    }
+
+    // Generate the EC key pair
+    if (EC_KEY_generate_key(key) != 1)
+    {
+        cerr << "Failed to generate EC key pair" << endl;
+        EC_GROUP_free(group);
+        EC_KEY_free(key);
+        return nullptr;
+    }
+
+    EC_GROUP_free(group);
+
+    return key;
 }
 EVP_PKEY *getPubKey(EVP_PKEY *ec_key)
 {
@@ -63,6 +103,54 @@ EVP_PKEY *getPubKey(EVP_PKEY *ec_key)
 void printECDH(string msg, EVP_PKEY *ec_key)
 {
     char *pub_key_hex = EC_POINT_point2hex(EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(ec_key)), EC_KEY_get0_public_key(EVP_PKEY_get0_EC_KEY(ec_key)), POINT_CONVERSION_COMPRESSED, NULL);
-    std::cout << msg << pub_key_hex << std::endl;
+    cout << msg << pub_key_hex << endl;
     OPENSSL_free(pub_key_hex);
+}
+
+void save_keypair_to_file(EC_KEY *keypair, const char *private_key_path, const char *public_key_path)
+{
+    BIO *private_key_bio = BIO_new_file(private_key_path, "w");
+    if (private_key_bio)
+    {
+        PEM_write_bio_ECPrivateKey(private_key_bio, keypair, nullptr, nullptr, 0, nullptr, nullptr);
+        BIO_free(private_key_bio);
+    }
+
+    BIO *public_key_bio = BIO_new_file(public_key_path, "w");
+    if (public_key_bio)
+    {
+        PEM_write_bio_EC_PUBKEY(public_key_bio, keypair);
+        BIO_free(public_key_bio);
+    }
+}
+
+EC_KEY *load_private_key(string private_key_path)
+{
+    EC_KEY *keypair = nullptr;
+
+    // Load the private key from file
+    // Replace this implementation with your own file loading logic
+    // Example:
+    BIO *private_key_bio = BIO_new_file(private_key_path.c_str(), "r");
+    if (private_key_bio)
+    {
+        keypair = PEM_read_bio_ECPrivateKey(private_key_bio, nullptr, nullptr, nullptr);
+        BIO_free(private_key_bio);
+    }
+    return keypair;
+}
+
+string pubkey_tostring(EC_KEY *keypair)
+{
+
+    // keypair = EC_KEY_new_by_curve_name(NID_secp256k1);
+    // EC_KEY_generate_key(keypair);
+    const EC_POINT *pubkey = EC_KEY_get0_public_key(keypair);
+    BIGNUM *pubkey_bn = EC_POINT_point2bn(EC_KEY_get0_group(keypair), pubkey, POINT_CONVERSION_UNCOMPRESSED, nullptr, nullptr);
+    char *pubkey_str = BN_bn2hex(pubkey_bn);
+    string pub(pubkey_str);
+    OPENSSL_free(pubkey_str);
+    BN_free(pubkey_bn);
+
+    return pub;
 }

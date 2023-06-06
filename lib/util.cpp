@@ -2,6 +2,8 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <sys/socket.h>
+#include <unistd.h>
 #include <openssl/err.h>
 #include "const.h"
 

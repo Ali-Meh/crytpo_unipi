@@ -1,17 +1,16 @@
-#include "lib/RSA.cpp"
+#include "lib/EC.cpp"
 #include "lib/db.cpp"
 #include "lib/hash.cpp"
 
 void seed_db(sqlite3 *db)
 {
-
-    RSA *keypair;
+    EC_KEY *keypair;
 
     // Initialize an array of sba_client_t with 10 elements
     sba_client_t clients[10];
 
     // Seed data
-    clients[0] = {1001, "john_doe", "p@ssw0rd", "", 5000.0, 1};
+    clients[0] = {1001, "a", "a", "", 5000.0, 1};
     clients[1] = {1002, "jane_doe", "pa$$word", "", 10000.0, 2};
     clients[2] = {1003, "bob_smith", "123456", "", 7500.0, 3};
     clients[3] = {1004, "sara_lee", "ilovecake", "", 2500.0, 4};
@@ -25,7 +24,7 @@ void seed_db(sqlite3 *db)
     vector<sba_client_t> client = getClientByUsername(db, clients[0].username);
     if (!client.empty())
     {
-        cout << "no need to seed it's already there." << endl;
+        cout << "no need to seed, it's already there." << endl;
         return;
     }
 
@@ -33,31 +32,15 @@ void seed_db(sqlite3 *db)
     for (int i = 0; i < 10; i++)
     {
         clients[i].password = hash_password(clients[i].password);
-        // Generate a new RSA keypair
-        keypair = generate_keypair();
+        // Generate a new EC keypair
+        keypair = generateECDHEC_KEY();
         clients[i].pubkey = pubkey_tostring(keypair);
         int id = insertClient(db, clients[i]);
 
         string ext = ".pem";
         string key_path = "keys/";
         save_keypair_to_file(keypair, (key_path + "sc" + to_string(id) + ext).c_str(), (key_path + "pc" + to_string(id) + ext).c_str());
-        RSA_free(keypair);
+        EC_KEY_free(keypair);
     }
     cout << "seed data to db complete." << endl;
-}
-
-// will generate or load up the prv/pub keys for asymmetric encryption
-void prepare_asymmetric_enc()
-{
-    RSA *keypair = load_private_key();
-    if (keypair == NULL)
-    {
-        keypair = generate_keypair();
-        int ret = save_keypair_to_file(keypair);
-        if (ret != 1)
-        {
-            perror("main: Couldn't find or generate pub/prv keys.");
-        }
-    }
-    RSA_free(keypair);
 }

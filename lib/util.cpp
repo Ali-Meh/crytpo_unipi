@@ -2,6 +2,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <openssl/err.h>
 #include "const.h"
 
 using namespace std;
@@ -199,4 +200,11 @@ int createNonce(unsigned char *buffer)
     free(tempNonce);
 
     return 1;
+}
+
+int handleErrors(std::string msg = "")
+{
+    std::cerr << "Error: " << msg << "\n"
+              << ERR_error_string(ERR_get_error(), nullptr) << '\n';
+    exit(1);
 }

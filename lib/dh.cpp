@@ -109,35 +109,36 @@ EVP_PKEY *loadKey(string file_name)
 
 unsigned char *deriveSharedKey(EVP_PKEY *dh_params, EVP_PKEY *peer_pubkey, size_t *skey_len)
 {
-    // cout << "Deriving a shared secret\n";
+
     /*creating a context, the buffer for the shared key and an int for its length*/
-    EVP_PKEY_CTX *derive_ctx;
-    unsigned char *skey;
-    derive_ctx = EVP_PKEY_CTX_new(dh_params, NULL);
-    if (!derive_ctx)
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(dh_params, NULL);
+    if (!ctx)
         handleErrors();
-    if (EVP_PKEY_derive_init(derive_ctx) <= 0)
+    if (EVP_PKEY_derive_init(ctx) <= 0)
         handleErrors();
     /*Setting the peer with its pubkey*/
-    if (EVP_PKEY_derive_set_peer(derive_ctx, peer_pubkey) <= 0)
+    if (EVP_PKEY_derive_set_peer(ctx, peer_pubkey) <= 0)
         handleErrors();
     /* Determine buffer length, by performing a derivation but writing the result nowhere */
-    EVP_PKEY_derive(derive_ctx, NULL, skey_len);
-    /*allocate buffer for the shared secret*/
-    skey = (unsigned char *)(malloc(*skey_len));
-    if (!skey)
-        handleErrors();
+    size_t secret_length = 0;
+    EVP_PKEY_derive(ctx, NULL, &secret_length);
+    unsigned char *shared_secret = (unsigned char *)malloc(secret_length);
     /*Perform again the derivation and store it in skey buffer*/
-    if (EVP_PKEY_derive(derive_ctx, skey, skey_len) <= 0)
+    if (EVP_PKEY_derive(ctx, shared_secret, &secret_length) <= 0)
         handleErrors();
-    // printf("Here it is the shared secret: \n");
-    // BIO_dump_fp(stdout, (const char *)skey, (int)skey_len);
 
-    // FREE EVERYTHING INVOLVED WITH THE EXCHANGE (not the shared secret tho)
-    EVP_PKEY_CTX_free(derive_ctx);
-    EVP_PKEY_free(peer_pubkey);
-    EVP_PKEY_free(dh_params);
-    return skey;
+    // Use shared secret to derive symmetric encryption key
+    // Here we're using a hash of the shared secret
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len = 0;
+    EVP_Digest(shared_secret, secret_length, md_value, &md_len, EVP_sha256(), NULL);
+    *skey_len = 32;
+    unsigned char *sk = (unsigned char *)(malloc(*skey_len));
+    memcpy(sk, md_value, *skey_len); // Use the first 32 bytes as the key
+
+    EVP_PKEY_CTX_free(ctx);
+    free(shared_secret);
+    return sk;
 }
 
 void print_big_num(const BIGNUM *bobPublicKey)

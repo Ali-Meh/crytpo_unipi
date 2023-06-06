@@ -20,3 +20,6 @@
 #define MAX_COMMAND_LENGTH 128
 #define MAX_FIELD_LENGTH 255
 #define MAX_MSG_LENGTH 1024
+
+// Diffie-Hellman parameters
+const int DH_PARAM_SIZE = 2048;

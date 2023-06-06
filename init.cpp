@@ -28,7 +28,10 @@ void seed_db(sqlite3 *db)
         return;
     }
 
-    // Print the seed data
+    string ext = ".pem";
+    string key_path = "keys/";
+
+    // insert the seed data
     for (int i = 0; i < 10; i++)
     {
         clients[i].password = hash_password(clients[i].password);
@@ -37,10 +40,14 @@ void seed_db(sqlite3 *db)
         clients[i].pubkey = pubkey_tostring(keypair);
         int id = insertClient(db, clients[i]);
 
-        string ext = ".pem";
-        string key_path = "keys/";
         save_keypair_to_file(keypair, (key_path + "sc" + to_string(id) + ext).c_str(), (key_path + "pc" + to_string(id) + ext).c_str());
         EC_KEY_free(keypair);
     }
+
+    // server keypair
+    keypair = generateECDHEC_KEY();
+    save_keypair_to_file(keypair, (key_path + "server_sec" + ext).c_str(), (key_path + "server_pub" + ext).c_str());
+    EC_KEY_free(keypair);
+
     cout << "seed data to db complete." << endl;
 }

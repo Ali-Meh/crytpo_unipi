@@ -142,15 +142,42 @@ EC_KEY *load_private_key(string private_key_path)
 
 string pubkey_tostring(EC_KEY *keypair)
 {
+    EVP_PKEY *evp_pubkey = EVP_PKEY_new();
+    if (!evp_pubkey)
+    {
+        cerr << "Failed to create EVP_PKEY object" << endl;
+        return "";
+    }
 
-    // keypair = EC_KEY_new_by_curve_name(NID_secp256k1);
-    // EC_KEY_generate_key(keypair);
-    const EC_POINT *pubkey = EC_KEY_get0_public_key(keypair);
-    BIGNUM *pubkey_bn = EC_POINT_point2bn(EC_KEY_get0_group(keypair), pubkey, POINT_CONVERSION_UNCOMPRESSED, nullptr, nullptr);
-    char *pubkey_str = BN_bn2hex(pubkey_bn);
-    string pub(pubkey_str);
-    OPENSSL_free(pubkey_str);
-    BN_free(pubkey_bn);
+    if (EVP_PKEY_set1_EC_KEY(evp_pubkey, keypair) != 1)
+    {
+        cerr << "Failed to set EC_KEY for EVP_PKEY" << endl;
+        EVP_PKEY_free(evp_pubkey);
+        return "";
+    }
 
-    return pub;
+    BIO *bio = BIO_new(BIO_s_mem());
+    if (!bio)
+    {
+        cerr << "Failed to create BIO object" << endl;
+        EVP_PKEY_free(evp_pubkey);
+        return "";
+    }
+
+    if (PEM_write_bio_PUBKEY(bio, evp_pubkey) != 1)
+    {
+        cerr << "Failed to write public key to BIO" << endl;
+        BIO_free(bio);
+        EVP_PKEY_free(evp_pubkey);
+        return "";
+    }
+
+    char *pubkey_data = nullptr;
+    long pubkey_len = BIO_get_mem_data(bio, &pubkey_data);
+    string pubkey_pem(pubkey_data, pubkey_len);
+
+    BIO_free(bio);
+    EVP_PKEY_free(evp_pubkey);
+
+    return pubkey_pem;
 }

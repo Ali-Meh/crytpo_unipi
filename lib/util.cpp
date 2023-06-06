@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <openssl/err.h>
+#include <cstring>
 #include "const.h"
 
 using namespace std;

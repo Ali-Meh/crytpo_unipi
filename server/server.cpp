@@ -271,9 +271,9 @@ public:
                     //     { // it's symetric key decrypt via session key
                     //         // decrypt the payload recived
                     //         // unsigned char *message = (unsigned char *)malloc(BUFFER_SIZE);
-                    //         // size_t decryptedPlaintextLength = decryptSym((unsigned char *)buffer, valread - ivSize, message, (unsigned char *)client_sockets[i].session_key.data());
+                    //         // size_t decryptedPlaintextLength = decryptAES((unsigned char *)buffer, valread - ivSize, message, (unsigned char *)client_sockets[i].session_key.data());
                     //         unsigned char *decodeText = (unsigned char *)malloc(BUFFER_SIZE);
-                    //         size_t decryptedPlaintextLength = decryptSym(reinterpret_cast<unsigned char *>(buffer), valread - ivSize, decodeText, (unsigned char *)client_sockets[i].session_key.data());
+                    //         size_t decryptedPlaintextLength = decryptAES(reinterpret_cast<unsigned char *>(buffer), valread - ivSize, decodeText, (unsigned char *)client_sockets[i].session_key.data());
                     //         printf("Decrypted Text: %s\n", (char *)decodeText);
 
                     //         string decrypted(*decodeText, decryptedPlaintextLength);
@@ -293,7 +293,7 @@ public:
                     //                 printf("found user id %d\n", db_users[0].id);
                     //                 sprintf(buffer, "BALANCE: %d\0", db_users[0].balance);
                     //                 unsigned char *payload = (unsigned char *)malloc(BUFFER_SIZE);
-                    //                 size_t ciphertextLength = encryptSym((unsigned char *)buffer, strlen(buffer), payload, (unsigned char *)client_sockets[i].session_key.data());
+                    //                 size_t ciphertextLength = encryptAES((unsigned char *)buffer, strlen(buffer), payload, (unsigned char *)client_sockets[i].session_key.data());
                     //                 send(sd, payload, ciphertextLength, 0);
                     //             }
                     //         }

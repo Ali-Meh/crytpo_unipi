@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include "../lib/hash.cpp" //Code for processing hashing
 #include "../lib/AES.cpp"
-#include "../lib/RSA.cpp"
+#include "../lib/EC.cpp"
 #include "../lib/const.h"
 
 using namespace std;
@@ -23,10 +23,9 @@ class Client
     // Client variables
     unsigned char *client_nonce;
     unsigned char *server_nonce;
-    string username; //, user_pub_key_path, user_prv_key_path;
-
-    EVP_PKEY *client_private_key;
-    RSA *server_public_key;
+    string username;
+    EC_KEY *client_private_key;
+    EVP_PKEY *server_public_key;
 
     // Available commands
     vector<string> commands = {"login", "balance", "transfer", "transactions"};
@@ -40,7 +39,7 @@ public:
         // getline(cin, username);
 
         cout << "Enter your private Key path:>> ";
-        string path = "../keys/sc102.pem";
+        string path = "../keys/sc139.pem";
         // getline(cin, path);
         client_private_key = load_private_key(path.c_str());
         if (!client_private_key)
@@ -51,7 +50,7 @@ public:
         }
 
         // cout << "Enter your public Key path:>> ";
-        // path = "../keys/pc102.pem";
+        // path = "../keys/pc139.pem";
         // // getline(cin, path);
         // RSA *client_public_key = load_public_key(path.c_str());
         // if (!client_public_key)
@@ -62,9 +61,9 @@ public:
         // }
 
         cout << "Enter server public Key path:>> ";
-        path = "../pub.pem";
+        path = "../keys/server_pub.pem";
         // getline(cin, path);
-        server_public_key = load_public_key(path.c_str());
+        server_public_key = convertToEVP(load_public_key(path.c_str()));
         if (!server_public_key)
         {
             cerr << "\nError could not load server's public key\n";
@@ -72,6 +71,7 @@ public:
             exit(1);
         }
     }
+
     // establish connection with server
     void establish_connection()
     {
@@ -105,115 +105,74 @@ public:
         printf("%s\n", buffer);
     }
 
-    // Create and send challenge to the server M1
-    void createAndSendEncryptedChallenge()
-    {
+    // // Create and send challenge to the server M1
+    // void createAndSendEncryptedChallenge()
+    // {
 
-        int ret;
-        // Create client nonce
-        client_nonce = (unsigned char *)malloc(NONCE_SIZE);
-        if (!client_nonce)
-        {
-            cerr << "Error allocating buffer for server client nonce\n";
-            close(sock);
-            exit(1);
-        }
-        ret = createNonce(client_nonce);
-        if (!ret)
-        {
-            cerr << "Error creating client nonce for server\n";
-            close(sock);
-            exit(1);
-        }
+    //     int ret;
+    //     // Create client nonce
+    //     client_nonce = (unsigned char *)malloc(NONCE_SIZE);
+    //     if (!client_nonce)
+    //     {
+    //         cerr << "Error allocating buffer for server client nonce\n";
+    //         close(sock);
+    //         exit(1);
+    //     }
+    //     ret = createNonce(client_nonce);
+    //     if (!ret)
+    //     {
+    //         cerr << "Error creating client nonce for server\n";
+    //         close(sock);
+    //         exit(1);
+    //     }
 
-        // read public key for user and concatnate with nonce
-        // Allocate buffer for publickey
-        size_t pub_len = 0;
-        unsigned char *client_public_key = extractPublicKey(client_private_key, pub_len);
+    //     // read public key for user and concatnate with nonce
+    //     // Allocate buffer for publickey
+    //     size_t pub_len = 0;
+    //     unsigned char *client_public_key = extractPublicKey(client_private_key, pub_len);
 
-        // Concatenate nonce and client's public key
-        unsigned char *payload = (unsigned char *)malloc(NONCE_SIZE + pub_len);
-        memcpy(payload, client_nonce, NONCE_SIZE);
-        memcpy(payload + NONCE_SIZE, client_public_key, pub_len);
+    //     // Concatenate nonce and client's public key
+    //     unsigned char *payload = (unsigned char *)malloc(NONCE_SIZE + pub_len);
+    //     memcpy(payload, client_nonce, NONCE_SIZE);
+    //     memcpy(payload + NONCE_SIZE, client_public_key, pub_len);
 
-        size_t cipher_len = 0;
-        unsigned char *encrypted_payload = encryptPubRSA(payload, pub_len + NONCE_SIZE, client_public_key, pub_len, cipher_len);
+    //     size_t cipher_len = 0;
+    //     unsigned char *encrypted_payload = encryptPubRSA(payload, pub_len + NONCE_SIZE, client_public_key, pub_len, cipher_len);
 
-        sendMessageWithSize(sock, encrypted_payload, cipher_len);
+    //     sendMessageWithSize(sock, encrypted_payload, cipher_len);
 
-        cout << cipher_len << " Sent: " << bin_to_hex(encrypted_payload, cipher_len).data() << endl;
+    //     cout << cipher_len << " Sent: " << bin_to_hex(encrypted_payload, cipher_len).data() << endl;
 
-        // Free
-        free(client_nonce);
-        free(client_public_key);
-        free(payload);
-    }
+    //     // Free
+    //     free(client_nonce);
+    //     free(client_public_key);
+    //     free(payload);
+    // }
 
     void exchange_keys()
     {
-        // Generate client's DH parameters
-        DH *dhParams = DH_new();
-        if (!dhParams)
-        {
-            fprintf(stderr, "Error generating DH parameters\n");
-            return;
-        }
-        if (!DH_generate_parameters_ex(dhParams, 256, DH_GENERATOR_2, nullptr))
-        {
-            fprintf(stderr, "Error generating DH parameters\n");
-            DH_free(dhParams);
-            return;
-        }
+        // Generate client's ephemeral ECDH private key
+        EVP_PKEY *client_key = generateECDHEVP_PKEY();
 
-        // Generate client's public-private key pair
-        if (!DH_generate_key(dhParams))
+        size_t pub_len = 0;
+        unsigned char *client_public_key = extractPublicKey(client_private_key, pub_len);
+
+        // Send temprory public key to the server (e.g., over network) M1
+        sendMessageWithSize(sock, client_public_key, pub_len);
+
+        // Generate shared secret
+        size_t secret_length = 0;
+        session_key = deriveSharedKey(client_key, server_public_key, &secret_length);
+        std::cout << "Client shared Secret: ";
+        for (int i = 0; i < secret_length; i++)
         {
-            fprintf(stderr, "Error generating client's DH key pair\n");
-            DH_free(dhParams);
-            return;
+            printf("%02x", session_key[i]);
         }
-
-        // Encode client's public key to PEM format
-        BIO *clientPublicKeyBio = BIO_new(BIO_s_mem());
-        if (!clientPublicKeyBio)
-        {
-            fprintf(stderr, "Error creating BIO for client's public key\n");
-            DH_free(dhParams);
-            return;
-        }
-        if (!PEM_write_bio_DHparams(clientPublicKeyBio, dhParams))
-        {
-            fprintf(stderr, "Error encoding client's public key\n");
-            BIO_free(clientPublicKeyBio);
-            DH_free(dhParams);
-            return;
-        }
-
-        char *clientPublicKeyPEM;
-        size_t clientPublicKeyPEMLen = BIO_get_mem_data(clientPublicKeyBio, &clientPublicKeyPEM);
-
-        cout << clientPublicKeyPEMLen << "plain text payload: \n"
-             << clientPublicKeyPEM << endl;
-
-        // Encrypt client's public key with server's RSA public key
-        unsigned char encryptedKey[RSA_size(server_public_key)];
-        int encryptedKeyLen = RSA_public_encrypt(static_cast<int>(clientPublicKeyPEMLen),
-                                                 reinterpret_cast<const unsigned char *>(clientPublicKeyPEM),
-                                                 encryptedKey, server_public_key, RSA_PKCS1_PADDING);
-        if (encryptedKeyLen == -1)
-        {
-            fprintf(stderr, "Error encrypting client's public key\n");
-            BIO_free(clientPublicKeyBio);
-            DH_free(dhParams);
-            return;
-        }
-
-        // Send encryptedKey to the server (e.g., over network)
-        sendMessageWithSize(sock, encryptedKey, encryptedKeyLen);
+        std::cout << std::endl;
 
         // Cleanup
-        BIO_free(clientPublicKeyBio);
-        DH_free(dhParams);
+        EVP_PKEY_free(client_key);
+        free(client_public_key);
     }
 };
 
@@ -329,10 +288,10 @@ int main(int argc, char *argv[])
         //         // encrypt command
         //         size_t ciphertextLength, dectextlength;
         //         unsigned char *ciphertext = (unsigned char *)malloc(BUFFER_SIZE);
-        //         ciphertextLength = encryptSym((unsigned char *)message, strlen(message), ciphertext, session_key);
+        //         ciphertextLength = encryptAES((unsigned char *)message, strlen(message), ciphertext, session_key);
         //         printf("sending payload aes %d Encrypted: %s :=> %s \n", ciphertextLength, message, bin_to_hex(ciphertext, ciphertextLength + ivSize).data());
         //         unsigned char *decodeText = (unsigned char *)malloc(BUFFER_SIZE);
-        //         dectextlength = decryptSym(ciphertext, ciphertextLength, decodeText, session_key);
+        //         dectextlength = decryptAES(ciphertext, ciphertextLength, decodeText, session_key);
         //         printf("Decrypted Text: %.*s\n", static_cast<int>(dectextlength), decodeText);
 
         //         // Send message to server
@@ -341,7 +300,7 @@ int main(int argc, char *argv[])
         //         // Receive response from server
         //         char buffer[MAX_COMMAND_LENGTH] = {0};
         //         len = read(sock, buffer, MAX_COMMAND_LENGTH);
-        //         dectextlength = decryptSym((unsigned char *)(payload.data()), ciphertextLength, decodeText, session_key);
+        //         dectextlength = decryptAES((unsigned char *)(payload.data()), ciphertextLength, decodeText, session_key);
 
         //         printf("recived balance: %s\n", payload);
         //     }

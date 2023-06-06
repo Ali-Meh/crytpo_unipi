@@ -8,6 +8,9 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+const char *PUB_FILE = "keys/server_pub.pem";
+const char *PRV_FILE = "keys/server_sec.pem";
+
 using namespace std;
 
 // deriveSharedKey for ECDH algorithm and hash the secret generated into sha256 as it's recommended for more security
@@ -138,6 +141,106 @@ EC_KEY *load_private_key(string private_key_path)
         BIO_free(private_key_bio);
     }
     return keypair;
+}
+
+EC_KEY *load_public_key(const char *filename = PUB_FILE)
+{
+    FILE *file = fopen(filename, "rb");
+    if (file == nullptr)
+    {
+        printf("WARN|load_public_key: couldn't load file: %s\n", filename);
+        return nullptr;
+    }
+
+    EC_KEY *keypair = PEM_read_EC_PUBKEY(file, nullptr, nullptr, nullptr);
+    fclose(file);
+
+    return keypair;
+}
+
+EVP_PKEY *convertToEVP(EC_KEY *private_key)
+{
+    EVP_PKEY *evp_key = EVP_PKEY_new();
+    if (!evp_key)
+    {
+        fprintf(stderr, "Error creating EVP_PKEY\n");
+        return nullptr;
+    }
+    if (!EVP_PKEY_set1_EC_KEY(evp_key, private_key))
+    {
+        fprintf(stderr, "Error setting EVP_PKEY to EC_KEY\n");
+        EVP_PKEY_free(evp_key);
+        return nullptr;
+    }
+    return evp_key;
+}
+
+unsigned char *extractPublicKey(EC_KEY *private_key, size_t &public_key_length)
+{
+    // Create a new BIO
+    BIO *bio = BIO_new(BIO_s_mem());
+    if (!bio)
+    {
+        fprintf(stderr, "Error creating BIO\n");
+        return nullptr;
+    }
+
+    // Create an EVP_PKEY structure from the EC private key
+    EVP_PKEY *evp_key = EVP_PKEY_new();
+    if (!evp_key)
+    {
+        fprintf(stderr, "Error creating EVP_PKEY\n");
+        BIO_free(bio);
+        return nullptr;
+    }
+    if (!EVP_PKEY_set1_EC_KEY(evp_key, private_key))
+    {
+        fprintf(stderr, "Error setting EVP_PKEY to EC_KEY\n");
+        EVP_PKEY_free(evp_key);
+        BIO_free(bio);
+        return nullptr;
+    }
+
+    // Write the public key data to the BIO
+    if (!PEM_write_bio_PUBKEY(bio, evp_key))
+    {
+        fprintf(stderr, "Error writing public key to BIO\n");
+        EVP_PKEY_free(evp_key);
+        BIO_free(bio);
+        return nullptr;
+    }
+
+    // Get the length of the public key data
+    long keyLength = BIO_pending(bio);
+    if (keyLength <= 0)
+    {
+        fprintf(stderr, "Error getting public key length\n");
+        EVP_PKEY_free(evp_key);
+        BIO_free(bio);
+        return nullptr;
+    }
+
+    // Allocate memory for the public key data
+    unsigned char *publicKeyData = new unsigned char[keyLength];
+
+    // Read the public key data from the BIO into the memory buffer
+    if (BIO_read(bio, publicKeyData, keyLength) <= 0)
+    {
+        fprintf(stderr, "Error reading public key from BIO\n");
+        EVP_PKEY_free(evp_key);
+        BIO_free(bio);
+        delete[] publicKeyData;
+        return nullptr;
+    }
+
+    // Clean up the EVP_PKEY and BIO
+    EVP_PKEY_free(evp_key);
+    BIO_free(bio);
+
+    // Update the output parameter with the public key length
+    public_key_length = static_cast<size_t>(keyLength);
+
+    return publicKeyData;
 }
 
 string pubkey_tostring(EC_KEY *keypair)

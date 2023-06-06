@@ -11,7 +11,7 @@ namespace hash
 }
 
 // Function to encrypt a message unsing symmetric encyption (aes cbc 256)
-int encryptSym(unsigned char *plaintext, int plainSize, unsigned char *ciphertext, unsigned char *privKey)
+int encryptAES(unsigned char *plaintext, int plainSize, unsigned char *ciphertext, unsigned char *privKey)
 {
 
     int ret;
@@ -74,7 +74,7 @@ int encryptSym(unsigned char *plaintext, int plainSize, unsigned char *ciphertex
 // ciphertextLength: length of the ciphertext (IV + encrypted data) in bytes
 // plaintextLength: pointer to store the length of the plaintext
 // Returns the dynamically allocated plaintext buffer
-int decryptSym(unsigned char *ciphertext, int cipherSize, unsigned char *plaintext, unsigned char *privKey)
+int decryptAES(unsigned char *ciphertext, int cipherSize, unsigned char *plaintext, unsigned char *privKey)
 {
 
     int ret;
@@ -165,11 +165,11 @@ std::string generate_aes_key()
 
 //     // Calculate ciphertext length (IV + encrypted data)
 //     unsigned char *ciphertext = (unsigned char *)malloc(plaintextLength + blockSize + ivSize);
-//     size_t ciphertextLength = encryptSym((unsigned char *)plaintext, plaintextLength, ciphertext, key);
+//     size_t ciphertextLength = encryptAES((unsigned char *)plaintext, plaintextLength, ciphertext, key);
 
 //     // Decrypt the ciphertext
 //     unsigned char *decryptedPlaintext = (unsigned char *)malloc(plaintextLength + blockSize);
-//     size_t decryptedPlaintextLength = decryptSym(ciphertext, ciphertextLength, decryptedPlaintext, key);
+//     size_t decryptedPlaintextLength = decryptAES(ciphertext, ciphertextLength, decryptedPlaintext, key);
 
 //     // Print the results
 //     printf("Plaintext: %s\n", plaintext);

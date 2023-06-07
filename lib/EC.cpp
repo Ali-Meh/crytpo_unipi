@@ -174,6 +174,86 @@ EVP_PKEY *convertToEVP(EC_KEY *private_key)
     }
     return evp_key;
 }
+EVP_PKEY *convertToEVP(unsigned char *pub_key, unsigned int pub_len)
+{
+    // Create a BIO object to read the public key data
+    BIO *bio = BIO_new_mem_buf(pub_key, pub_len);
+
+    if (bio == nullptr)
+    {
+        // Handle error, e.g., memory allocation failure
+        return nullptr;
+    }
+
+    // Load the PEM-formatted public key from the BIO object
+    EC_KEY *loaded_key = PEM_read_bio_EC_PUBKEY(bio, nullptr, nullptr, nullptr);
+    if (loaded_key == nullptr)
+    {
+        // Handle error, e.g., invalid PEM data or unsupported key format
+        BIO_free(bio);
+        return nullptr;
+    }
+    // Clean up the BIO object
+    BIO_free(bio);
+    // // Return the loaded EVP_PKEY object
+    // EVP_PKEY *evp_key = EVP_PKEY_new();
+    // if (!evp_key)
+    // {
+    //     fprintf(stderr, "Error creating EVP_PKEY\n");
+    //     return nullptr;
+    // }
+    // if (!EVP_PKEY_set1_EC_KEY(evp_key, loaded_key))
+    // {
+    //     fprintf(stderr, "Error setting EVP_PKEY to EC_KEY\n");
+    //     EVP_PKEY_free(evp_key);
+    //     return nullptr;
+    // }
+    return convertToEVP(loaded_key);
+}
+
+unsigned char *extractPrivateKey(EC_KEY *private_key, size_t &private_key_length)
+{
+    unsigned char *key_data = nullptr;
+    BIO *bio = nullptr;
+
+    // Create a memory BIO object to write the private key data
+    bio = BIO_new(BIO_s_mem());
+
+    if (bio == nullptr)
+    {
+        // Handle error, e.g., memory allocation failure
+        return nullptr;
+    }
+
+    // Write the private key data to the BIO object
+    if (!PEM_write_bio_ECPrivateKey(bio, private_key, nullptr, nullptr, 0, nullptr, nullptr))
+    {
+        // Handle error, e.g., failed to write the private key data
+        BIO_free(bio);
+        return nullptr;
+    }
+
+    // Determine the length of the private key data
+    private_key_length = BIO_pending(bio);
+
+    // Allocate memory for the private key data
+    key_data = new unsigned char[private_key_length];
+
+    // Read the private key data from the BIO object into the memory
+    if (BIO_read(bio, key_data, private_key_length) <= 0)
+    {
+        // Handle error, e.g., failed to read the private key data
+        BIO_free(bio);
+        delete[] key_data;
+        return nullptr;
+    }
+
+    // Clean up the BIO object
+    BIO_free(bio);
+
+    // Return the extracted private key data
+    return key_data;
+}
 
 unsigned char *extractPublicKey(EC_KEY *private_key, size_t &public_key_length)
 {

@@ -152,17 +152,24 @@ public:
     void exchange_keys()
     {
         // Generate client's ephemeral ECDH private key
-        EVP_PKEY *client_key = generateECDHEVP_PKEY();
+        EC_KEY *client_key = generateECDHEC_KEY();
 
         size_t pub_len = 0;
-        unsigned char *client_public_key = extractPublicKey(client_private_key, pub_len);
+        unsigned char *client_public_key = extractPublicKey(client_key, pub_len);
+        unsigned char *cpk = extractPrivateKey(client_key, pub_len);
 
         // Send temprory public key to the server (e.g., over network) M1
         sendMessageWithSize(sock, client_public_key, pub_len);
+        cout << "PEM: \n"
+             << client_public_key << endl
+             << cpk;
+
+        printECDH("Client pub_key: ", convertToEVP(client_key));
+        printECDH("Server pub_key: ", server_public_key);
 
         // Generate shared secret
         size_t secret_length = 0;
-        session_key = deriveSharedKey(client_key, server_public_key, &secret_length);
+        session_key = deriveSharedKey(convertToEVP(client_key), server_public_key, &secret_length);
         std::cout << "Client shared Secret: ";
         for (int i = 0; i < secret_length; i++)
         {
@@ -171,7 +178,7 @@ public:
         std::cout << std::endl;
 
         // Cleanup
-        EVP_PKEY_free(client_key);
+        EC_KEY_free(client_key);
         free(client_public_key);
     }
 };

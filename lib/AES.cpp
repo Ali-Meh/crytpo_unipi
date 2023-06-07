@@ -3,7 +3,7 @@
 #include <cstring> // For memcpy
 #include <cstdio>
 // #include "util.cpp"
-#include "const.h"
+// #include "const.h"
 
 namespace hash
 {

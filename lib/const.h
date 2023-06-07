@@ -22,4 +22,4 @@
 #define MAX_MSG_LENGTH 1024
 
 // Diffie-Hellman parameters
-const int DH_PARAM_SIZE = 2048;
+// const int DH_PARAM_SIZE = 2048;

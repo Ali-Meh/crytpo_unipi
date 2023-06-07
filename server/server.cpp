@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h>      //FD_SET, FD_ISSET, FD_ZERO macros
-#include "../lib/RSA.cpp"  //Code for processing [a]symectric encryptions
+#include "../lib/EC.cpp"   //Code for processing [a]symectric encryptions
 #include "../lib/db.cpp"   //Code for processing db
 #include "../lib/hash.cpp" //Code for processing hashing
 #include "../lib/AES.cpp"  //Code for processing symectric encryptions
@@ -21,12 +21,45 @@
 using namespace std;
 
 /* Structure describing an Internet socket address.  */
-struct sba_client_conn
+class sba_client_conn
 {
+public:
     bool in_use;
     int sd;             /*Socket Descriptor*/
     string session_key; /*Session key for secure connection*/
     int valid_until;    /*Session key validity period*/
+
+    int exchange_keys(EVP_PKEY *ec_key)
+    {
+        // Recieve temprory public key from client M1
+        unsigned int pub_len = 0;
+        unsigned char *peer_pubkey = recieveSizedMessage(sd, &pub_len);
+        cout << "PEM: \n"
+             << peer_pubkey;
+        // Print the public key in hexadecimal format
+        EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, pub_len);
+        // EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, pub_len);
+
+        printECDH("Recived Client pub_key: ", peer_pub_key);
+        printECDH("Server pub_key: ", ec_key);
+
+        // Generate shared secret
+        size_t secret_length = 0;
+        unsigned char *sk = deriveSharedKey(ec_key, peer_pub_key, &secret_length);
+
+        session_key = string((char *)sk, secret_length);
+
+        std::cout << "Server shared Secret: ";
+        for (int i = 0; i < secret_length; i++)
+        {
+            printf("%02x", sk[i]);
+        }
+        std::cout << std::endl;
+
+        // Cleanup
+        free(peer_pubkey);
+        return 1;
+    }
 };
 
 class Server
@@ -35,7 +68,7 @@ class Server
     const static int max_clients = 30;
     int master_socket, addrlen, new_socket, activity, i, valread, sd, max_sd;
     sba_client_conn client_sockets[max_clients];
-    EVP_PKEY *private_key;
+    EC_KEY *private_key;
 
     // set of socket descriptors
     fd_set readfds;
@@ -51,6 +84,7 @@ class Server
         close(client_socket.sd);
         client_socket.in_use = false;
         client_socket.sd = 0;
+        client_socket.session_key = "";
     }
 
 public:
@@ -64,7 +98,7 @@ public:
             client_sockets[i].sd = 0;
         }
 
-        string path = "../prv.pem";
+        string path = "../keys/server_sec.pem";
         // getline(cin, path);
         private_key = load_private_key(path.c_str());
         if (!private_key)
@@ -104,8 +138,8 @@ public:
         }
         printf("Listener on port %d \n", port);
 
-        // try to specify maximum of 3 pending connections for the master socket
-        if (listen(master_socket, 3) < 0)
+        // try to specify maximum of max_clients pending connections for the master socket
+        if (listen(master_socket, max_clients) < 0)
         {
             perror("listen");
             exit(EXIT_FAILURE);
@@ -192,20 +226,20 @@ public:
 
                 if (FD_ISSET(sd, &readfds))
                 {
+                    // establish session key
+                    if (client_sockets[i].session_key.empty() && client_sockets[i].exchange_keys(convertToEVP(private_key)) <= 0)
+                    {
+                        printf("Failed to Exchange Keys with client on ip %s , port %d \n",
+                               inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+                        close_and_free_socket(client_sockets[i]);
+                    }
+                    else
+                    {
+                        // wait for commands
+                    }
 
-                    unsigned int *totalSizePtr = (unsigned int *)malloc(sizeof(unsigned int));
-
-                    unsigned char *message = recieveSizedMessage(sd, totalSizePtr);
-                    cout << *totalSizePtr << "bits Received: " << bin_to_hex(message, *totalSizePtr).data() << endl;
-                    size_t decrypted_len;
-                    unsigned char *decrypted = decryptPrvRSA(message, *totalSizePtr, private_key, decrypted_len);
-                    cout << decrypted_len << "bits Decrypted: \n"
-                         << string((char *)decrypted, decrypted_len)
-                         << endl;
-                    exit(1);
-                    // // Check if it was for closing , and also read the
-                    // // incoming message
                     // memset(buffer, '\0', sizeof(buffer));
+                    // // connection Dropped Disconnecting the socket and free it
                     // if ((valread = read(sd, buffer, BUFFER_SIZE)) == 0)
                     // {
                     //     // Somebody disconnected , get his details and print
@@ -217,6 +251,9 @@ public:
                     //     // Close the socket and mark as 0 in list for reuse
                     //     close_and_free_socket(client_sockets[i]);
                     // }
+
+                    // // Check if it was for closing , and also read the
+                    // // incoming message
 
                     // // Process Messages
                     // else
@@ -325,7 +362,7 @@ int main(int argc, char *argv[])
     Server serv;
     cout << "Starting server...\n";
     serv.start_server();
-    cout << "Socket connection established\n";
+    cout << "Exsiting...\n";
 
     return 0;
 }

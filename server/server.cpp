@@ -120,14 +120,14 @@ class Server
         close_and_free_socket(client_socket);
     }
     // checks whether user is loggedin or not if not will send unauthorized Message to user
-    int checkUserIsAuthenticated(sba_client_conn client_socket)
+    int checkUserIsAuthenticated(sba_client_conn *client_socket)
     {
         int ret = 1;
-        if (!client_socket.isLoggedIn())
+        if (!(*client_socket).isLoggedIn())
         {
             // send unAuthorized to the client
             string result = Errors::NotAuthorized + ":";
-            ret = encryptAndSendmsg(client_socket.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)client_socket.session_key.c_str());
+            ret = encryptAndSendmsg((*client_socket).sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)(*client_socket).session_key.c_str());
             if (ret < 0)
             {
                 cerr << "Error:checkUserIsAuthenticated: Not able to send Error message" << endl;
@@ -156,19 +156,36 @@ public:
             exit(1);
         }
     }
-    int onLogin(vector<string> args, sba_client_conn conn)
+    int onLogin(vector<string> args, sba_client_conn *conn)
     {
+        cout << "onLogin..." << endl;
         vector<sba_client_t> db_users = getClientByUsername(db, args[1]);
         if (db_users.empty() || !verify_password(args[2], db_users[0].password))
         {
             string result = generateResult(Errors::WrongCredentials, "you might retry");
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg((*conn).sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)(*conn).session_key.c_str());
             return 0;
         }
         printf("found user id %d\n", db_users[0].id);
+        (*conn).user_session = db_users[0];
+        cout << "user logged in as: " << (*conn).user_session.username << endl;
+        string result = generateResult(Errors::Null, "Loggedin Successfully as " + (*conn).user_session.username);
+        encryptAndSendmsg((*conn).sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)(*conn).session_key.c_str());
+        return 1;
+    }
+    int onBalance(vector<string> args, sba_client_conn conn)
+    {
+        cout << "onBalance..." << endl;
+        vector<sba_client_t> db_users = getClientByUsername(db, conn.user_session.username);
+        if (db_users.empty())
+        {
+            string result = generateResult(Errors::NotFound);
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        printf("balance found user id %d\n", db_users[0].id);
         conn.user_session = db_users[0];
-        cout << "user logged in as: " << conn.user_session.username << endl;
-        string result = generateResult(Errors::Null, "Loggedin Successfully as " + conn.user_session.username);
+        string result = generateResult(Errors::Null, to_string(conn.user_session.balance));
         encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
         return 1;
     }
@@ -317,21 +334,19 @@ public:
                         {
                         case Commands::Login:
                             /* code */
-                            onLogin(args, client_sockets[i]);
+                            onLogin(args, &client_sockets[i]);
                             break;
                         case Commands::Balance:
-                            ret = checkUserIsAuthenticated(client_sockets[i]);
-                            if (!ret)
+                            if (!checkUserIsAuthenticated(&client_sockets[i]))
                                 continue;
+                            onBalance(args, client_sockets[i]);
                             break;
                         case Commands::List:
-                            ret = checkUserIsAuthenticated(client_sockets[i]);
-                            if (!ret)
+                            if (!checkUserIsAuthenticated(&client_sockets[i]))
                                 continue;
                             break;
                         case Commands::Transfer:
-                            ret = checkUserIsAuthenticated(client_sockets[i]);
-                            if (!ret)
+                            if (!checkUserIsAuthenticated(&client_sockets[i]))
                                 continue;
                             break;
 

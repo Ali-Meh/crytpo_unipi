@@ -233,12 +233,74 @@ public:
             break;
         }
     }
+    void handleCommands()
+    {
+        // Loop for sending commands to server
+        while (1)
+        {
+            printf("Enter command (balance, transfer, list, exit): ");
+            getline(cin, current_command);
+
+            // Send balance command with username
+            if (current_command == "balance" || current_command == "0")
+            {
+                // Construct balance message
+                string message = to_string(Commands::Balance);
+
+                // encrypt command
+                encryptAndSendmsg(sock, (unsigned char *)message.c_str(), message.size(), session_key);
+
+                // Receive response from server
+                unsigned int result_len = 0;
+                unsigned char *result = recieveAndDecryptMsg(sock, &result_len, session_key);
+                cout << "balance is: " << split(string((char *)result, result_len), ':')[1] << endl;
+            }
+            // Send transfer command with username and amount
+            else if (current_command == "transfer" || current_command == "1")
+            {
+                // char username[MAX_FIELD_LENGTH];
+                // double amount;
+                // printf("Enter username: ");
+                // fgets(username, MAX_FIELD_LENGTH, stdin);
+                // strtok(username, "\n");
+                // printf("Enter amount: ");
+                // scanf("%lf", &amount);
+                // getchar(); // Remove newline character from input
+
+                // // Construct transfer message
+                // char message[MAX_COMMAND_LENGTH + MAX_FIELD_LENGTH];
+                // sprintf(message, "%s:%s:%s", command, username, amount);
+
+                // // Send message to server
+                // send(sock, message, strlen(message), 0);
+
+                // // Receive response from server
+                // char buffer[MAX_COMMAND_LENGTH] = {0};
+                // read(sock, buffer, MAX_COMMAND_LENGTH);
+                // printf("%s\n", buffer);
+            }
+            // Send transfer command with username and amount
+            else if (current_command == "list" || current_command == "2")
+            {
+            }
+            // Send transfer command with username and amount
+            else if (current_command == "exit" || current_command == "3")
+            {
+                exit(0);
+            }
+            else
+            {
+                cout << "Not a valid command try agian." << endl;
+            }
+        }
+    }
 };
 
 int main()
 {
     // int ret;
     Client user1;
+    string command;
 
     cout << "Starting client, waiting for server to be available...\n";
     user1.establish_connection();
@@ -255,6 +317,9 @@ int main()
 
     user1.login();
     cout << "loggedin with username password.\n";
+
+    user1.handleCommands();
+    cout << "exiting.\n";
 }
 /*
 int main(int argc, char *argv[])

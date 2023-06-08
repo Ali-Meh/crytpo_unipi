@@ -7,8 +7,57 @@
 #include <openssl/err.h>
 #include <cstring>
 #include "const.h"
+namespace crypter
+{
+#include "AES.cpp"
+}
 
 using namespace std;
+
+enum Commands
+{
+    Login,
+    Balance,
+    Transfer,
+    List,
+    NotValidCommand
+};
+Commands resolveCommand(string input)
+{
+    if (input == "0" || input == "login")
+        return Commands::Login;
+    if (input == "1" || input == "balance")
+        return Commands::Balance;
+    if (input == "2" || input == "transfer")
+        return Commands::Transfer;
+    if (input == "3" || input == "list")
+        return Commands::List;
+    return Commands::NotValidCommand;
+}
+enum Errors
+{
+    Todo,
+    NotFound,
+    NotAuthorized,
+    NotValid
+};
+Errors resolveError(string input)
+{
+    if (input == "0" || input == "Todo")
+        return Errors::Todo;
+    if (input == "1" || input == "NotFound")
+        return Errors::NotFound;
+    if (input == "1" || input == "NotAuthorized")
+        return Errors::NotAuthorized;
+
+    return Errors::NotValid;
+}
+string generateErrorResult(Errors err, string msg)
+{
+    string res = err + ":" + msg;
+
+    return res;
+}
 
 // create custom split() function
 vector<string> split(string str, char del)
@@ -94,6 +143,17 @@ int sendMessageWithSize(int sd, unsigned char *message, int messageLength)
 
     return 1;
 }
+int encryptAndSendmsg(int sd, unsigned char *message, int messageLength, unsigned char *key)
+{
+    int cipher_len = 0;
+    unsigned char *cipher = crypter::encryptAES(message, messageLength, &cipher_len, key);
+    int ret = sendMessageWithSize(sd, cipher, cipher_len);
+    if (PRINT_MESSAGES)
+        cout << "<< Sending Message: " << bin_to_hex(message, messageLength) << endl;
+    if (PRINT_ENCRYPT_MESSAGES)
+        cout << "<< Encrypted: " << bin_to_hex(cipher, cipher_len) << endl;
+    return cipher_len;
+}
 int sendMessageWithSize(int sd, string message)
 {
     int ret;
@@ -135,6 +195,21 @@ unsigned char *recieveSizedMessage(int sd, unsigned int *totalSizePtr)
     return message;
 }
 
+unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned char *key)
+{
+    unsigned int cipher_len = 0;
+    unsigned char *cipher = recieveSizedMessage(sd, &cipher_len);
+    if (cipher == NULL)
+    {
+        return NULL;
+    }
+    if (PRINT_MESSAGES)
+        cout << ">> Recived cipher: " << bin_to_hex(cipher, cipher_len) << endl;
+    unsigned char *message = crypter::decryptAES(cipher, cipher_len, message_len, key);
+    if (PRINT_ENCRYPT_MESSAGES)
+        cout << ">> Decrypted: " << bin_to_hex(message, *message_len) << endl;
+    return message;
+}
 // Generate a random and fresh nonce
 int createNonce(unsigned char *buffer)
 {

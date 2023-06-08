@@ -2,13 +2,10 @@
 #include <openssl/evp.h>
 #include <cstring> // For memcpy
 #include <cstdio>
-// #include "util.cpp"
+#include <iostream>
 // #include "const.h"
 
-namespace hash
-{
-#include "hash.cpp"
-}
+using namespace std;
 
 // Function to encrypt a message unsing symmetric encyption (aes cbc 256)
 unsigned char *encryptAES(unsigned char *plaintext, int plainSize, int *ciphertext_len, unsigned char *privKey)
@@ -28,7 +25,7 @@ unsigned char *encryptAES(unsigned char *plaintext, int plainSize, int *cipherte
         cerr << "Error randomizing iv for symmetric encrytpion\n";
         return 0;
     }
-    printf("Encrypting with IV: %s Key: %s\n", bin_to_hex(iv, ivSize).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
+    // printf("Encrypting with IV: %s Key: %s\n", bin_to_hex(iv, ivSize).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
 
     // Create context
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -97,7 +94,7 @@ unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned in
     int bytesWritten;
     int decryptedSize;
 
-    printf("Decrypting with IV: %s Key: %s\n", bin_to_hex(ciphertext, ivLen).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
+    // printf("Decrypting with IV: %s Key: %s\n", bin_to_hex(ciphertext, ivLen).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
 
     // Decrypt
     ret = EVP_DecryptInit(ctx, cipher, privKey, ciphertext);
@@ -141,9 +138,9 @@ std::string generate_aes_key()
     unsigned int digest_len = 32;
     unsigned char digest[digest_len];
 
-    sha256(aes_key, AES_KEY_SIZE, digest, &digest_len);
+    EVP_Digest(aes_key, AES_KEY_SIZE, digest, &digest_len, EVP_sha256(), NULL);
     std::string str(reinterpret_cast<char *>(digest), digest_len);
-    printf("Generated key: %s  -> %s \n%s\n", digest, str.data(), bin_to_hex(digest, digest_len).data());
+    // printf("Generated key: %s  -> %s \n%s\n", digest, str.data(), bin_to_hex(digest, digest_len).data());
     return str;
 }
 

@@ -23,3 +23,8 @@
 
 // Diffie-Hellman parameters
 // const int DH_PARAM_SIZE = 2048;
+
+// Verbose
+#define PRINT_ENCRYPT_MESSAGES TRUE
+#define PRINT_DECRYPT_MESSAGES TRUE
+#define PRINT_MESSAGES TRUE

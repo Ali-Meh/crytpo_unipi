@@ -184,11 +184,8 @@ public:
 
     void authenticateWithServer()
     {
-        unsigned int cipher_len = 0, message_len = 0;
-        unsigned char *cipher = recieveSizedMessage(sock, &cipher_len);
-
-        unsigned char *message = decryptAES(cipher, cipher_len, &message_len, session_key);
-        cout << "Decrypted message: " << bin_to_hex(message, message_len) << endl;
+        unsigned int message_len = 0;
+        unsigned char *message = recieveAndDecryptMsg(sock, &message_len, session_key);
     }
 };
 

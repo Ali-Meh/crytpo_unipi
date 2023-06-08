@@ -15,8 +15,8 @@
 #include "../lib/EC.cpp"   //Code for processing [a]symectric encryptions
 #include "../lib/db.cpp"   //Code for processing db
 #include "../lib/hash.cpp" //Code for processing hashing
-#include "../lib/AES.cpp"  //Code for processing symectric encryptions
-#include "../lib/const.h"  //Code for processing symectric encryptions
+// #include "../lib/AES.cpp"  //Code for processing symectric encryptions
+#include "../lib/const.h" //Code for processing symectric encryptions
 
 using namespace std;
 
@@ -25,9 +25,15 @@ class sba_client_conn
 {
 public:
     bool in_use;
-    int sd;             /*Socket Descriptor*/
-    string session_key; /*Session key for secure connection*/
-    int valid_until;    /*Session key validity period*/
+    int sd;              /*Socket Descriptor*/
+    string session_key;  /*Session key for secure connection*/
+    string user_session; /*username session belongs to*/
+    int valid_until;     /*Session key validity period*/
+
+    bool isLoggedIn()
+    {
+        return user_session.empty();
+    }
 
     int exchange_keys(EVP_PKEY *ec_key)
     {
@@ -63,11 +69,13 @@ public:
         if (ret < 0)
             cerr << "couln't create Nonce\n";
 
-        int cipher_len = 0;
-        unsigned char *cipher = encryptAES(nonce, NONCE_SIZE, &cipher_len, (unsigned char *)session_key.c_str());
+        // int cipher_len = 0;
+        // unsigned char *cipher = crypter::encryptAES(nonce, NONCE_SIZE, &cipher_len, (unsigned char *)session_key.c_str());
 
-        cout << "<< Sending M2 Encrypted Nonce with sessionKey: " << bin_to_hex(nonce, NONCE_SIZE) << endl;
-        sendMessageWithSize(sd, cipher, cipher_len);
+        // cout << "<< Sending M2 Encrypted Nonce with sessionKey: " << bin_to_hex(nonce, NONCE_SIZE) << endl;
+        // sendMessageWithSize(sd, cipher, cipher_len);
+
+        encryptAndSendmsg(sd, nonce, NONCE_SIZE, (unsigned char *)session_key.c_str());
 
         // Cleanup
         free(peer_pubkey);
@@ -100,16 +108,32 @@ class Server
         client_socket.sd = 0;
         client_socket.session_key = "";
     }
-    void onClientDisconnect()
+    void onClientDisconnect(sba_client_conn client_socket)
     {
         // Somebody disconnected , get his details and print
-        getpeername(sd, (struct sockaddr *)&address,
+        getpeername(client_socket.sd, (struct sockaddr *)&address,
                     (socklen_t *)&addrlen);
         printf("Host disconnected , ip %s , port %d, sock %d\n",
-               inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_sockets[i].sd);
+               inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_socket.sd);
 
         // Close the socket and mark as 0 in list for reuse
-        close_and_free_socket(client_sockets[i]);
+        close_and_free_socket(client_socket);
+    }
+    // checks whether user is loggedin or not if not will send unauthorized Message to user
+    int checkUserIsAuthenticated(sba_client_conn client_socket)
+    {
+        int ret = 1;
+        if (!client_socket.isLoggedIn())
+        {
+            // send unAuthorized to the client
+            string result = Errors::NotAuthorized + ":";
+            ret = encryptAndSendmsg(client_socket.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)client_socket.session_key.c_str());
+            if (ret < 0)
+            {
+                cerr << "Error:checkUserIsAuthenticated: Not able to send Error message" << endl;
+            }
+        }
+        return ret;
     }
 
 public:
@@ -262,15 +286,60 @@ public:
                     {
                         int ret = 0;
 
-                        unsigned int cipher_len = 0, command_len = 0;
-                        unsigned char *cipher = recieveSizedMessage(sd, &cipher_len);
-                        if (cipher == NULL)
+                        unsigned int command_len = 0;
+                        unsigned char *command = recieveAndDecryptMsg(sd, &command_len, (unsigned char *)client_sockets[i].session_key.c_str());
+                        if (command == NULL)
                         {
-                            onClientDisconnect();
+                            onClientDisconnect(client_sockets[i]);
                             continue;
                         }
-                        unsigned char *command = decryptAES(cipher, cipher_len, &command_len, (unsigned char *)client_sockets[i].session_key.c_str());
                         cout << "command Received" << command;
+                        string command_str((char *)command, command_len);
+
+                        vector<string> parts = split(command_str, ':');
+                        switch (resolveCommand(parts[0]))
+                        {
+                        case Commands::Login:
+                            /* code */
+                            break;
+                        case Commands::Balance:
+                            ret = checkUserIsAuthenticated(client_sockets[i]);
+                            if (!ret)
+                                continue;
+                            break;
+                        case Commands::List:
+                            ret = checkUserIsAuthenticated(client_sockets[i]);
+                            if (!ret)
+                                continue;
+                            break;
+                        case Commands::Transfer:
+                            ret = checkUserIsAuthenticated(client_sockets[i]);
+                            if (!ret)
+                                continue;
+                            break;
+
+                        default:
+                            cerr << "No Command Handler Try Again." << command;
+
+                            break;
+                        }
+
+                        if (strcmp(parts[0].c_str(), "login") != 0)
+                        {
+                            sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                            send(sd, buffer, 0, 0);
+                            close_and_free_socket(client_sockets[i]);
+                        }
+
+                        vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
+                        printf("found user id %d\n", db_users[0].id);
+                        if (db_users.empty() || !verify_password(parts[2], db_users[0].password))
+                        {
+                            sprintf(buffer, "ERROR: %s\0", "unathorized!");
+                            printf("wrote %d bytes to buffer, %s\n", strlen(buffer), buffer);
+                            send(sd, buffer, strlen(buffer), 0);
+                            close_and_free_socket(client_sockets[i]);
+                        }
                     }
 
                     // memset(buffer, '\0', sizeof(buffer));

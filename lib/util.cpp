@@ -14,6 +14,20 @@ namespace crypter
 
 using namespace std;
 
+// create custom split() function
+vector<string> split(string str, char del)
+{
+    vector<string> splitted;
+    stringstream ss(str);
+    string item;
+    while (getline(ss, item, del))
+    {
+        splitted.push_back(item);
+    }
+
+    return splitted;
+}
+
 enum Commands
 {
     Login,
@@ -34,11 +48,30 @@ Commands resolveCommand(string input)
         return Commands::List;
     return Commands::NotValidCommand;
 }
+string ToString(Commands v)
+{
+    switch (v)
+    {
+    case Login:
+        return "0";
+    case Balance:
+        return "1";
+    case Transfer:
+        return "2";
+    case List:
+        return "3";
+    default:
+        return "NotValidCommand";
+    }
+}
+
 enum Errors
 {
+    Null,
     Todo,
     NotFound,
     NotAuthorized,
+    WrongCredentials,
     NotValid
 };
 Errors resolveError(string input)
@@ -47,31 +80,41 @@ Errors resolveError(string input)
         return Errors::Todo;
     if (input == "1" || input == "NotFound")
         return Errors::NotFound;
-    if (input == "1" || input == "NotAuthorized")
+    if (input == "2" || input == "NotAuthorized")
         return Errors::NotAuthorized;
+    if (input == "3" || input == "WrongCredentials")
+        return Errors::WrongCredentials;
 
     return Errors::NotValid;
 }
-string generateErrorResult(Errors err, string msg)
+enum Response
 {
-    string res = err + ":" + msg;
+    ERROR,
+    SUCCESS
+};
+Response resolveResponse(string input)
+{
+    vector<string> parts = split(input, ':');
+
+    if (parts[0] == "0" || parts[0] == "ERROR")
+        return Response::ERROR;
+    // if (parts[0] == "1" || parts[0] == "SUCCESS")
+    return Response::SUCCESS;
+}
+string generateResult(Errors err, string msg = "")
+{
+
+    string res;
+    if (err != Errors::Null)
+        // Error
+        res = "0:" + to_string(static_cast<int>(err)) + ":" + msg;
+    else
+        // success
+        res = "1:" + msg;
 
     return res;
 }
 
-// create custom split() function
-vector<string> split(string str, char del)
-{
-    vector<string> splitted;
-    stringstream ss(str);
-    string item;
-    while (getline(ss, item, del))
-    {
-        splitted.push_back(item);
-    }
-
-    return splitted;
-}
 // bin_to_hex
 string bin_to_hex(unsigned char *digest, int digest_len)
 {
@@ -151,7 +194,7 @@ int encryptAndSendmsg(int sd, unsigned char *message, int messageLength, unsigne
     if (PRINT_MESSAGES)
         cout << "<< Sending Message: " << bin_to_hex(message, messageLength) << endl;
     if (PRINT_ENCRYPT_MESSAGES)
-        cout << "<< Encrypted: " << bin_to_hex(cipher, cipher_len) << endl;
+        cout << "<< Encrypted(Hex): " << bin_to_hex(cipher, cipher_len) << endl;
     return cipher_len;
 }
 int sendMessageWithSize(int sd, string message)
@@ -207,7 +250,7 @@ unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned 
         cout << ">> Recived cipher: " << bin_to_hex(cipher, cipher_len) << endl;
     unsigned char *message = crypter::decryptAES(cipher, cipher_len, message_len, key);
     if (PRINT_ENCRYPT_MESSAGES)
-        cout << ">> Decrypted: " << bin_to_hex(message, *message_len) << endl;
+        cout << ">> Decrypted(Hex): " << bin_to_hex(message, *message_len) << endl;
     return message;
 }
 // Generate a random and fresh nonce

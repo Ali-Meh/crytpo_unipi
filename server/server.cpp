@@ -25,14 +25,14 @@ class sba_client_conn
 {
 public:
     bool in_use;
-    int sd;              /*Socket Descriptor*/
-    string session_key;  /*Session key for secure connection*/
-    string user_session; /*username session belongs to*/
-    int valid_until;     /*Session key validity period*/
+    int sd;                    /*Socket Descriptor*/
+    string session_key;        /*Session key for secure connection*/
+    sba_client_t user_session; /*username session belongs to*/
+    int valid_until;           /*Session key validity period*/
 
     bool isLoggedIn()
     {
-        return user_session.empty();
+        return sizeof(user_session) > 0 && !std::is_empty<sba_client_t>::value;
     }
 
     int exchange_keys(EVP_PKEY *ec_key)
@@ -155,6 +155,22 @@ public:
             cerr << "Error could not load servers's private key\n";
             exit(1);
         }
+    }
+    int onLogin(vector<string> args, sba_client_conn conn)
+    {
+        vector<sba_client_t> db_users = getClientByUsername(db, args[1]);
+        if (db_users.empty() || !verify_password(args[2], db_users[0].password))
+        {
+            string result = generateResult(Errors::WrongCredentials, "you might retry");
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        printf("found user id %d\n", db_users[0].id);
+        conn.user_session = db_users[0];
+        cout << "user logged in as: " << conn.user_session.username << endl;
+        string result = generateResult(Errors::Null, "Loggedin Successfully as " + conn.user_session.username);
+        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+        return 1;
     }
 
     void start_server(int port = SERVER_PORT)
@@ -293,14 +309,15 @@ public:
                             onClientDisconnect(client_sockets[i]);
                             continue;
                         }
-                        cout << "command Received" << command;
                         string command_str((char *)command, command_len);
+                        cout << "command Received: " << command_str << endl;
 
-                        vector<string> parts = split(command_str, ':');
-                        switch (resolveCommand(parts[0]))
+                        vector<string> args = split(command_str, ':');
+                        switch (resolveCommand(args[0]))
                         {
                         case Commands::Login:
                             /* code */
+                            onLogin(args, client_sockets[i]);
                             break;
                         case Commands::Balance:
                             ret = checkUserIsAuthenticated(client_sockets[i]);
@@ -322,23 +339,6 @@ public:
                             cerr << "No Command Handler Try Again." << command;
 
                             break;
-                        }
-
-                        if (strcmp(parts[0].c_str(), "login") != 0)
-                        {
-                            sprintf(buffer, "ERROR: %s\0", "unathorized!");
-                            send(sd, buffer, 0, 0);
-                            close_and_free_socket(client_sockets[i]);
-                        }
-
-                        vector<sba_client_t> db_users = getClientByUsername(db, parts[1]);
-                        printf("found user id %d\n", db_users[0].id);
-                        if (db_users.empty() || !verify_password(parts[2], db_users[0].password))
-                        {
-                            sprintf(buffer, "ERROR: %s\0", "unathorized!");
-                            printf("wrote %d bytes to buffer, %s\n", strlen(buffer), buffer);
-                            send(sd, buffer, strlen(buffer), 0);
-                            close_and_free_socket(client_sockets[i]);
                         }
                     }
 

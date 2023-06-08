@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <termios.h>
 #include "../lib/hash.cpp" //Code for processing hashing
 #include "../lib/AES.cpp"
 #include "../lib/EC.cpp"
@@ -32,10 +33,31 @@ class Client
     map<string, int> commands_map;
     string current_command;
 
+    string getPassword()
+    {
+        string password;
+        termios oldSettings, newSettings;
+
+        // Disable terminal echoing
+        tcgetattr(STDIN_FILENO, &oldSettings);
+        newSettings = oldSettings;
+        newSettings.c_lflag &= ~ECHO;
+        tcsetattr(STDIN_FILENO, TCSANOW, &newSettings);
+
+        // Read the password
+        getline(cin, password);
+
+        // Enable terminal echoing
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
+
+        return password;
+    }
+
 public:
     Client()
     {
-        // cout << "Enter Username:>> ";
+        cout << "Enter Username:>> ";
+        username = "a";
         // getline(cin, username);
 
         cout << "Enter your private Key path:>> ";
@@ -170,12 +192,12 @@ public:
         // Generate shared secret
         size_t secret_length = 0;
         session_key = deriveSharedKey(convertToEVP(client_key), server_public_key, &secret_length);
-        std::cout << "Client shared Secret: ";
+        cout << "Client shared Secret: ";
         for (int i = 0; i < secret_length; i++)
         {
             printf("%02x", session_key[i]);
         }
-        std::cout << std::endl;
+        cout << endl;
 
         // Cleanup
         EC_KEY_free(client_key);
@@ -186,6 +208,30 @@ public:
     {
         unsigned int message_len = 0;
         unsigned char *message = recieveAndDecryptMsg(sock, &message_len, session_key);
+        cout << "Authenticated with server: " << message << endl;
+    }
+    void login()
+    {
+        cout << ">> Enter password: ";
+        string password = getPassword();
+        cout << endl;
+        string command = ToString(Commands::Login) + ":" + username + ":" + password;
+        encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
+
+        unsigned int result_len = 0;
+        unsigned char *result = recieveAndDecryptMsg(sock, &result_len, session_key);
+        string result_str((char *)result, result_len);
+        switch (resolveResponse(result_str))
+        {
+        case Response::ERROR:
+            /* code */
+            cout << "Try again Error Happend: " << result_str << endl;
+            login();
+            break;
+        default:
+            cout << "loggedin Seccuessfully: " << result_str << endl;
+            break;
+        }
     }
 };
 
@@ -206,6 +252,9 @@ int main()
 
     user1.authenticateWithServer();
     cout << "Authenticated Session Key.\n";
+
+    user1.login();
+    cout << "loggedin with username password.\n";
 }
 /*
 int main(int argc, char *argv[])
@@ -347,7 +396,7 @@ int main(int argc, char *argv[])
         //     }
         // }
     }
-    catch (const std::exception &e)
+    catch (const exception &e)
     {
         cerr << e.what() << '\n';
     }

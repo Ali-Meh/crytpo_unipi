@@ -181,6 +181,15 @@ public:
         EC_KEY_free(client_key);
         free(client_public_key);
     }
+
+    void authenticateWithServer()
+    {
+        unsigned int cipher_len = 0, message_len = 0;
+        unsigned char *cipher = recieveSizedMessage(sock, &cipher_len);
+
+        unsigned char *message = decryptAES(cipher, cipher_len, &message_len, session_key);
+        cout << "Decrypted message: " << bin_to_hex(message, message_len) << endl;
+    }
 };
 
 int main()
@@ -197,6 +206,9 @@ int main()
 
     user1.exchange_keys();
     cout << "Exchanged keys Succesfully.\n";
+
+    user1.authenticateWithServer();
+    cout << "Authenticated Session Key.\n";
 }
 /*
 int main(int argc, char *argv[])

@@ -50,14 +50,28 @@ public:
         session_key = string((char *)sk, secret_length);
 
         std::cout << "Server shared Secret: ";
-        for (int i = 0; i < secret_length; i++)
+        for (size_t i = 0; i < session_key.size(); ++i)
         {
-            printf("%02x", sk[i]);
+            unsigned char byte = static_cast<unsigned char>(session_key[i]);
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
         }
-        std::cout << std::endl;
+        std::cout << std::dec << std::endl;
+
+        // send NonceFor Authentication
+        unsigned char *nonce = (unsigned char *)malloc(NONCE_SIZE);
+        int ret = createNonce(nonce);
+        if (ret < 0)
+            cerr << "couln't create Nonce\n";
+
+        int cipher_len = 0;
+        unsigned char *cipher = encryptAES(nonce, NONCE_SIZE, &cipher_len, (unsigned char *)session_key.c_str());
+
+        cout << "<< Sending M2 Encrypted Nonce with sessionKey: " << bin_to_hex(nonce, NONCE_SIZE) << endl;
+        sendMessageWithSize(sd, cipher, cipher_len);
 
         // Cleanup
         free(peer_pubkey);
+        free(sk);
         return 1;
     }
 };
@@ -85,6 +99,17 @@ class Server
         client_socket.in_use = false;
         client_socket.sd = 0;
         client_socket.session_key = "";
+    }
+    void onClientDisconnect()
+    {
+        // Somebody disconnected , get his details and print
+        getpeername(sd, (struct sockaddr *)&address,
+                    (socklen_t *)&addrlen);
+        printf("Host disconnected , ip %s , port %d, sock %d\n",
+               inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_sockets[i].sd);
+
+        // Close the socket and mark as 0 in list for reuse
+        close_and_free_socket(client_sockets[i]);
     }
 
 public:
@@ -212,7 +237,7 @@ public:
                     {
                         client_sockets[i].sd = new_socket;
                         client_sockets[i].in_use = true;
-                        printf("Adding to list of sockets as %d\n", i);
+                        printf("Adding to list of sockets as %d on %d\n", new_socket, i);
 
                         break;
                     }
@@ -233,9 +258,19 @@ public:
                                inet_ntoa(address.sin_addr), ntohs(address.sin_port));
                         close_and_free_socket(client_sockets[i]);
                     }
-                    else
+                    else if (client_sockets[i].in_use)
                     {
-                        // wait for commands
+                        int ret = 0;
+
+                        unsigned int cipher_len = 0, command_len = 0;
+                        unsigned char *cipher = recieveSizedMessage(sd, &cipher_len);
+                        if (cipher == NULL)
+                        {
+                            onClientDisconnect();
+                            continue;
+                        }
+                        unsigned char *command = decryptAES(cipher, cipher_len, &command_len, (unsigned char *)client_sockets[i].session_key.c_str());
+                        cout << "command Received" << command;
                     }
 
                     // memset(buffer, '\0', sizeof(buffer));

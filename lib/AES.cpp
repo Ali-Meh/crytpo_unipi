@@ -11,12 +11,11 @@ namespace hash
 }
 
 // Function to encrypt a message unsing symmetric encyption (aes cbc 256)
-int encryptAES(unsigned char *plaintext, int plainSize, unsigned char *ciphertext, unsigned char *privKey)
+unsigned char *encryptAES(unsigned char *plaintext, int plainSize, int *ciphertext_len, unsigned char *privKey)
 {
 
     int ret;
     unsigned char *iv = (unsigned char *)malloc(ivSize);
-
     // Encryption params
     const EVP_CIPHER *cipher = EVP_aes_256_cbc();
     int ivLen = EVP_CIPHER_iv_length(cipher);
@@ -38,6 +37,8 @@ int encryptAES(unsigned char *plaintext, int plainSize, unsigned char *ciphertex
         cerr << "Error creating context for symmetric encryption\n";
         return 0;
     }
+    unsigned char *ciphertext = (unsigned char *)malloc(plainSize + EVP_CIPHER_block_size(cipher) + ivLen);
+
     int bytesWritten;
     int encryptedSize;
 
@@ -65,7 +66,9 @@ int encryptAES(unsigned char *plaintext, int plainSize, unsigned char *ciphertex
     EVP_CIPHER_CTX_free(ctx);
     mempcpy(ciphertext, iv, ivLen);
 
-    return encryptedSize;
+    // ciphertext_len encryptedSize + ivLen;
+    *ciphertext_len = encryptedSize + ivLen;
+    return ciphertext;
 }
 
 // Decrypts input ciphertext (with IV prepended) using AES-256 CBC mode
@@ -74,13 +77,15 @@ int encryptAES(unsigned char *plaintext, int plainSize, unsigned char *ciphertex
 // ciphertextLength: length of the ciphertext (IV + encrypted data) in bytes
 // plaintextLength: pointer to store the length of the plaintext
 // Returns the dynamically allocated plaintext buffer
-int decryptAES(unsigned char *ciphertext, int cipherSize, unsigned char *plaintext, unsigned char *privKey)
+unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned int *plaintext_size, unsigned char *privKey)
 {
 
     int ret;
 
     // Decryption params
     const EVP_CIPHER *cipher = EVP_aes_256_cbc();
+    int ivLen = EVP_CIPHER_iv_length(cipher);
+    unsigned char *plaintext = (unsigned char *)malloc(2 * (cipherSize - ivLen));
 
     // Create context
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -92,7 +97,7 @@ int decryptAES(unsigned char *ciphertext, int cipherSize, unsigned char *plainte
     int bytesWritten;
     int decryptedSize;
 
-    printf("Decrypting with IV: %s Key: %s\n", bin_to_hex(ciphertext, ivSize).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
+    printf("Decrypting with IV: %s Key: %s\n", bin_to_hex(ciphertext, ivLen).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
 
     // Decrypt
     ret = EVP_DecryptInit(ctx, cipher, privKey, ciphertext);
@@ -101,7 +106,7 @@ int decryptAES(unsigned char *ciphertext, int cipherSize, unsigned char *plainte
         cerr << "Error during initialization for symmetric decryption\n";
         return 0;
     }
-    ret = EVP_DecryptUpdate(ctx, plaintext, &bytesWritten, ciphertext + ivSize, cipherSize);
+    ret = EVP_DecryptUpdate(ctx, plaintext, &bytesWritten, ciphertext + ivSize, cipherSize - ivLen);
     if (ret <= 0)
     {
         cerr << "Error during update for symmetric decryption\n";
@@ -116,8 +121,8 @@ int decryptAES(unsigned char *ciphertext, int cipherSize, unsigned char *plainte
     }
     decryptedSize += bytesWritten;
     EVP_CIPHER_CTX_free(ctx);
-
-    return decryptedSize;
+    *plaintext_size = decryptedSize;
+    return plaintext;
 }
 
 // Generates a secure random key with the specified length in bytes

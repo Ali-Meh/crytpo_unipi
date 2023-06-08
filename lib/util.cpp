@@ -72,6 +72,7 @@ enum Errors
     NotFound,
     NotAuthorized,
     WrongCredentials,
+    NotEnoughFunds,
     NotValid
 };
 Errors resolveError(string input)
@@ -84,6 +85,8 @@ Errors resolveError(string input)
         return Errors::NotAuthorized;
     if (input == "3" || input == "WrongCredentials")
         return Errors::WrongCredentials;
+    if (input == "4" || input == "NotEnoughFunds")
+        return Errors::NotEnoughFunds;
 
     return Errors::NotValid;
 }

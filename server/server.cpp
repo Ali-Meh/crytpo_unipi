@@ -189,6 +189,53 @@ public:
         encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
         return 1;
     }
+    int onTransfer(vector<string> args, sba_client_conn conn)
+    {
+        double amount = stod(args[2]);
+        sba_client_t sender, receiver;
+        cout << "onTransfer... from " << conn.user_session.username
+             << " to " << args[1]
+             << " $" << amount << endl;
+        vector<sba_client_t> db_users = getClientByUsername(db, conn.user_session.username);
+        // get sender user
+        if (db_users.empty())
+        {
+            string result = generateResult(Errors::NotFound);
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        else if (db_users[0].balance < amount)
+        {
+            string result = generateResult(Errors::NotEnoughFunds, "Not Enough Funds...");
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        sender = db_users[0];
+
+        // get sender user
+        db_users = getClientByUsername(db, args[1]);
+        if (db_users.empty())
+        {
+            string result = generateResult(Errors::NotFound, "reciever doesn't exist");
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        receiver = db_users[0];
+
+        // transfer funds
+        sba_transaction_t transaction = {0, sender.id, ""};
+        if (transferToReceiver(db, transaction, receiver.id, amount) != 0)
+        {
+            string result = generateResult(Errors::Todo);
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        // save encrypted version on server db
+
+        string result = generateResult(Errors::Null, to_string(amount) + "$ to " + receiver.username);
+        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+        return 1;
+    }
 
     void start_server(int port = SERVER_PORT)
     {
@@ -348,6 +395,7 @@ public:
                         case Commands::Transfer:
                             if (!checkUserIsAuthenticated(&client_sockets[i]))
                                 continue;
+                            onTransfer(args, client_sockets[i]);
                             break;
 
                         default:

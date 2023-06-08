@@ -48,6 +48,71 @@ int insertTransaction(sqlite3 *db, const sba_transaction_t &transaction)
     return sqlite3_last_insert_rowid(db);
 }
 
+// Function to Transfer amounts between user accounts and
+int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int receiver, double amount)
+{
+    sqlite3_stmt *stmt;
+
+    int rc = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        // Handle error beginning transaction
+        return rc;
+    }
+
+    rc = sqlite3_prepare_v2(db, "UPDATE clients SET Balance = Balance - ? WHERE id = ?;", -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        // Handle error preparing the first update statement
+        return rc;
+    }
+
+    sqlite3_bind_double(stmt, 1, amount);
+    sqlite3_bind_int(stmt, 2, transaction.userId);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        // Handle error executing the first update statement
+        return rc;
+    }
+
+    sqlite3_reset(stmt);
+
+    rc = sqlite3_prepare_v2(db, "UPDATE clients SET Balance = Balance + ? WHERE id = ?;", -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        // Handle error preparing the second update statement
+        return rc;
+    }
+
+    sqlite3_bind_double(stmt, 1, amount);
+    sqlite3_bind_int(stmt, 2, receiver);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        // Handle error executing the second update statement
+        return rc;
+    }
+
+    rc = sqlite3_exec(db, "COMMIT;", 0, 0, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        // Handle error committing the transaction
+        return rc;
+    }
+
+    sqlite3_finalize(stmt);
+    return SQLITE_OK;
+}
+
 // Function to retrieve a transaction by ID
 sba_transaction_t getTransactionById(sqlite3 *db, int id)
 {

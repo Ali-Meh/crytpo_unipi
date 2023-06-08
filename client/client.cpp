@@ -235,49 +235,60 @@ public:
     }
     void handleCommands()
     {
+        unsigned int result_len = 0;
+        unsigned char *result;
+        string command;
         // Loop for sending commands to server
         while (1)
         {
-            printf("Enter command (balance, transfer, list, exit): ");
+            cout << "Enter command (balance, transfer, list, exit): ";
             getline(cin, current_command);
 
             // Send balance command with username
             if (current_command == "balance" || current_command == "0")
             {
                 // Construct balance message
-                string message = to_string(Commands::Balance);
+                command = to_string(Commands::Balance);
 
                 // encrypt command
-                encryptAndSendmsg(sock, (unsigned char *)message.c_str(), message.size(), session_key);
+                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
 
                 // Receive response from server
-                unsigned int result_len = 0;
-                unsigned char *result = recieveAndDecryptMsg(sock, &result_len, session_key);
+
+                result = recieveAndDecryptMsg(sock, &result_len, session_key);
                 cout << "balance is: " << split(string((char *)result, result_len), ':')[1] << endl;
             }
             // Send transfer command with username and amount
             else if (current_command == "transfer" || current_command == "1")
             {
-                // char username[MAX_FIELD_LENGTH];
-                // double amount;
-                // printf("Enter username: ");
-                // fgets(username, MAX_FIELD_LENGTH, stdin);
-                // strtok(username, "\n");
-                // printf("Enter amount: ");
-                // scanf("%lf", &amount);
-                // getchar(); // Remove newline character from input
+                string reciever, amount;
+                cout << "Enter reciever's username: ";
+                getline(cin, reciever);
+                cout << "Enter amount to transfer: ";
+                getline(cin, amount);
+                while (stod(amount) < 0)
+                {
+                    cout << "Wrong amount it should be number, Enter amount: ";
+                    getline(cin, amount);
+                }
 
-                // // Construct transfer message
-                // char message[MAX_COMMAND_LENGTH + MAX_FIELD_LENGTH];
-                // sprintf(message, "%s:%s:%s", command, username, amount);
+                // encrypt command
+                command = to_string(Commands::Transfer) + ":" + reciever + ":" + amount;
+                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
 
-                // // Send message to server
-                // send(sock, message, strlen(message), 0);
-
-                // // Receive response from server
-                // char buffer[MAX_COMMAND_LENGTH] = {0};
-                // read(sock, buffer, MAX_COMMAND_LENGTH);
-                // printf("%s\n", buffer);
+                // Receive response from server
+                result_len = 0;
+                result = recieveAndDecryptMsg(sock, &result_len, session_key);
+                string result_str((char *)result, result_len);
+                switch (resolveResponse(result_str))
+                {
+                case Response::ERROR:
+                    cout << "Couldn't Transfer: " << result_str << endl;
+                    break;
+                default:
+                    cout << "Transferred Seccuessfully: " << result_str << endl;
+                    break;
+                }
             }
             // Send transfer command with username and amount
             else if (current_command == "list" || current_command == "2")
@@ -292,6 +303,8 @@ public:
             {
                 cout << "Not a valid command try agian." << endl;
             }
+
+            free(result);
         }
     }
 };

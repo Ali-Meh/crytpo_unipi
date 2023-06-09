@@ -1,5 +1,6 @@
 // Symmetric cipher constants
 #define AES_KEY_SIZE 32
+#define HMAC_SIZE 32
 // #define blockSize 16
 #define ivSize 16
 

@@ -1,31 +1,32 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <cstring> // For memcpy
 #include <cstdio>
 #include <iostream>
-// #include "const.h"
+#include "const.h"
 
 using namespace std;
 
 // Function to encrypt a message unsing symmetric encyption (aes cbc 256)
 unsigned char *encryptAES(unsigned char *plaintext, int plainSize, int *ciphertext_len, unsigned char *privKey)
 {
-
     int ret;
-    unsigned char *iv = (unsigned char *)malloc(ivSize);
+
     // Encryption params
     const EVP_CIPHER *cipher = EVP_aes_256_cbc();
     int ivLen = EVP_CIPHER_iv_length(cipher);
+    unsigned int hmacSize = HMAC_SIZE;
 
-    // Create iv
+    // Create IV
+    unsigned char *iv = (unsigned char *)malloc(ivLen);
     RAND_poll();
     ret = RAND_bytes(iv, ivLen);
     if (!ret)
     {
-        cerr << "Error randomizing iv for symmetric encrytpion\n";
+        cerr << "Error randomizing iv for symmetric encryption\n";
         return 0;
     }
-    // printf("Encrypting with IV: %s Key: %s\n", bin_to_hex(iv, ivSize).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
 
     // Create context
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -34,10 +35,11 @@ unsigned char *encryptAES(unsigned char *plaintext, int plainSize, int *cipherte
         cerr << "Error creating context for symmetric encryption\n";
         return 0;
     }
-    unsigned char *ciphertext = (unsigned char *)malloc(plainSize + EVP_CIPHER_block_size(cipher) + ivLen);
 
-    int bytesWritten;
-    int encryptedSize;
+    // Allocate memory for ciphertext
+    unsigned char *ciphertext = (unsigned char *)malloc(plainSize + EVP_CIPHER_block_size(cipher) + ivLen + hmacSize);
+
+    int bytesWritten = 0, encryptedSize = 0;
 
     // Encrypt plaintext
     ret = EVP_EncryptInit(ctx, cipher, privKey, iv);
@@ -60,11 +62,26 @@ unsigned char *encryptAES(unsigned char *plaintext, int plainSize, int *cipherte
         cerr << "Error during finalization for symmetric encryption\n";
         return 0;
     }
-    EVP_CIPHER_CTX_free(ctx);
-    mempcpy(ciphertext, iv, ivLen);
 
-    // ciphertext_len encryptedSize + ivLen;
-    *ciphertext_len = encryptedSize + ivLen;
+    // Calculate HMAC from plaintext
+    unsigned char *hmac = HMAC(EVP_sha256(), privKey, AES_KEY_SIZE, plaintext, plainSize, NULL, &hmacSize);
+    if (hmac == NULL)
+    {
+        cerr << "Error calculating HMAC\n";
+        return 0;
+    }
+
+    // Append IV to ciphertext
+    memcpy(ciphertext, iv, ivLen);
+    // Append HMAC to ciphertext end
+    memcpy(ciphertext + ivLen + encryptedSize, hmac, hmacSize);
+
+    // ciphertext_len = encryptedSize + ivLen + hmacSize;
+    *ciphertext_len = encryptedSize + ivLen + hmacSize;
+
+    // clean up
+    free(iv);
+    EVP_CIPHER_CTX_free(ctx);
     return ciphertext;
 }
 
@@ -82,7 +99,7 @@ unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned in
     // Decryption params
     const EVP_CIPHER *cipher = EVP_aes_256_cbc();
     int ivLen = EVP_CIPHER_iv_length(cipher);
-    unsigned char *plaintext = (unsigned char *)malloc(2 * (cipherSize - ivLen));
+    unsigned char *plaintext = (unsigned char *)malloc(cipherSize - ivLen - HMAC_SIZE);
 
     // Create context
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -91,10 +108,11 @@ unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned in
         cerr << "Error creating context for symmetric decryption\n";
         return 0;
     }
-    int bytesWritten;
-    int decryptedSize;
 
-    // printf("Decrypting with IV: %s Key: %s\n", bin_to_hex(ciphertext, ivLen).data(), bin_to_hex(privKey, AES_KEY_SIZE).data());
+    int bytesWritten = 0, decryptedSize = 0;
+
+    // Extract IV
+    cipherSize = cipherSize - ivLen - HMAC_SIZE;
 
     // Decrypt
     ret = EVP_DecryptInit(ctx, cipher, privKey, ciphertext);
@@ -103,7 +121,7 @@ unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned in
         cerr << "Error during initialization for symmetric decryption\n";
         return 0;
     }
-    ret = EVP_DecryptUpdate(ctx, plaintext, &bytesWritten, ciphertext + ivSize, cipherSize - ivLen);
+    ret = EVP_DecryptUpdate(ctx, plaintext, &bytesWritten, ciphertext + ivLen, cipherSize);
     if (ret <= 0)
     {
         cerr << "Error during update for symmetric decryption\n";
@@ -117,8 +135,25 @@ unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned in
         return 0;
     }
     decryptedSize += bytesWritten;
-    EVP_CIPHER_CTX_free(ctx);
     *plaintext_size = decryptedSize;
+
+    // Calculate HMAC from the decrypted plaintext
+    unsigned int hmacSize;
+    unsigned char *calculatedHmac = HMAC(EVP_sha256(), privKey, AES_KEY_SIZE, plaintext, decryptedSize, NULL, &hmacSize);
+    if (calculatedHmac == NULL)
+    {
+        cerr << "Error calculating HMAC\n";
+        return 0;
+    }
+    // Compare the calculated HMAC with the HMAC extracted from the ciphertext
+    if (memcmp(calculatedHmac, ciphertext + ivLen + cipherSize, HMAC_SIZE) != 0)
+    {
+        cerr << "HMAC verification failed. The ciphertext may have been tampered with.\n";
+        return 0;
+    }
+
+    EVP_CIPHER_CTX_free(ctx);
+    free(ciphertext);
     return plaintext;
 }
 
@@ -135,7 +170,7 @@ std::string generate_aes_key()
 {
     unsigned char *aes_key = new unsigned char[AES_KEY_SIZE];
     RAND_bytes(aes_key, AES_KEY_SIZE);
-    unsigned int digest_len = 32;
+    unsigned int digest_len = AES_KEY_SIZE;
     unsigned char digest[digest_len];
 
     EVP_Digest(aes_key, AES_KEY_SIZE, digest, &digest_len, EVP_sha256(), NULL);

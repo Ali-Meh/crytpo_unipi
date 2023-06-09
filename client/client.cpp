@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include <termios.h>
 #include "../lib/hash.cpp" //Code for processing hashing
-#include "../lib/AES.cpp"
 #include "../lib/EC.cpp"
 #include "../lib/const.h"
 

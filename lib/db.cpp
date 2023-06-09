@@ -10,7 +10,7 @@ struct sba_transaction_t
 {
     int id;
     int userId;
-    string encTransaction; // receiver:amount
+    string encTransaction; // (user, amount, timestamp).
 };
 
 // Function to handle errors

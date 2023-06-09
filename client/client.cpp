@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include "../lib/hash.cpp" //Code for processing hashing
+#include "../lib/RSA.cpp"
 #include "../lib/EC.cpp"
 #include "../lib/const.h"
 
@@ -24,7 +25,7 @@ class Client
     unsigned char *client_nonce;
     unsigned char *server_nonce;
     string username;
-    EC_KEY *client_private_key;
+    EVP_PKEY *client_private_key;
     EVP_PKEY *server_public_key;
 
     // Available commands
@@ -59,13 +60,13 @@ public:
         username = "a";
         // getline(cin, username);
 
-        cout << "Enter your private Key path:>> ";
-        string path = "../keys/sc139.pem";
+        cout << "\nEnter your private Key path:>> ";
+        string path = "../keys/sc149.pem";
         // getline(cin, path);
-        client_private_key = load_private_key(path.c_str());
+        client_private_key = rsa::load_private_key(path.c_str());
         if (!client_private_key)
         {
-            cerr << "Error could not load user's private key\n";
+            cerr << "\n!Error could not load user's private key\n";
             close(sock);
             exit(1);
         }

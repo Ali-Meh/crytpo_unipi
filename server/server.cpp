@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>      //FD_SET, FD_ISSET, FD_ZERO macros
 #include "../lib/EC.cpp"   //Code for processing [a]symectric encryptions
+#include "../lib/RSA.cpp"  //Code for processing [a]symectric encryptions
 #include "../lib/db.cpp"   //Code for processing db
 #include "../lib/hash.cpp" //Code for processing hashing
 // #include "../lib/AES.cpp"  //Code for processing symectric encryptions
@@ -44,7 +45,6 @@ public:
              << peer_pubkey;
         // Print the public key in hexadecimal format
         EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, pub_len);
-        // EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, pub_len);
 
         printECDH("Recived Client pub_key: ", peer_pub_key);
         printECDH("Server pub_key: ", ec_key);
@@ -223,15 +223,22 @@ public:
         receiver = db_users[0];
 
         // transfer funds
-        sba_transaction_t transaction = {0, sender.id, ""};
+        // save encrypted version on server db
+        time_t stamp;
+        time(&stamp);
+        string trx_msg(receiver.username + ":" + to_string(amount) + ":" + to_string(stamp));
+        string enc_trx = rsa::encryptPubRSA(trx_msg, sender.pubkey);
+
+        sba_transaction_t transaction = {0, sender.id, enc_trx};
         if (transferToReceiver(db, transaction, receiver.id, amount) != 0)
         {
             string result = generateResult(Errors::Todo);
             encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
             return 0;
         }
-        // save encrypted version on server db
 
+        insertTransaction(db, transaction);
+        cout << "saving transaction: " << trx_msg;
         string result = generateResult(Errors::Null, to_string(amount) + "$ to " + receiver.username);
         encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
         return 1;

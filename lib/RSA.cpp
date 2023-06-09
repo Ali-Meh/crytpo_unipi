@@ -69,10 +69,8 @@ namespace rsa
     {
 
         // Get the public key from the RSA keypair
-        EVP_PKEY *pkey = EVP_PKEY_new();
-        EVP_PKEY_set1_RSA(pkey, keypair);
         BIO *bp_public = BIO_new(BIO_s_mem());
-        PEM_write_bio_PUBKEY(bp_public, pkey);
+        PEM_write_bio_RSAPublicKey(bp_public, keypair);
 
         // Save the public key in the client's pubkey variable
         char *pubkey_buf = nullptr;
@@ -81,8 +79,6 @@ namespace rsa
         string pubkey = string(pubkey_buf, pubkey_len);
 
         BIO_free(bp_public);
-        EVP_PKEY_free(pkey);
-
         return pubkey;
     }
 

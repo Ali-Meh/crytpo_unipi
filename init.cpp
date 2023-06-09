@@ -1,10 +1,11 @@
 #include "lib/EC.cpp"
+#include "lib/RSA.cpp"
 #include "lib/db.cpp"
 #include "lib/hash.cpp"
 
 void seed_db(sqlite3 *db)
 {
-    EC_KEY *keypair;
+    RSA *keypair;
 
     // Initialize an array of sba_client_t with 10 elements
     sba_client_t clients[10];
@@ -36,18 +37,18 @@ void seed_db(sqlite3 *db)
     {
         clients[i].password = hash_password(clients[i].password);
         // Generate a new EC keypair
-        keypair = generateECDHEC_KEY();
-        clients[i].pubkey = pubkey_tostring(keypair);
+        keypair = rsa::generate_keypair();
+        clients[i].pubkey = rsa::pubkey_tostring(keypair);
         int id = insertClient(db, clients[i]);
 
-        save_keypair_to_file(keypair, (key_path + "sc" + to_string(id) + ext).c_str(), (key_path + "pc" + to_string(id) + ext).c_str());
-        EC_KEY_free(keypair);
+        rsa::save_keypair_to_file(keypair, (key_path + "sc" + to_string(id) + ext).c_str(), (key_path + "pc" + to_string(id) + ext).c_str());
+        RSA_free(keypair);
     }
 
     // server keypair
-    keypair = generateECDHEC_KEY();
-    save_keypair_to_file(keypair, (key_path + "server_sec" + ext).c_str(), (key_path + "server_pub" + ext).c_str());
-    EC_KEY_free(keypair);
+    EC_KEY *skeypair = generateECDHEC_KEY();
+    save_keypair_to_file(skeypair, (key_path + "server_sec" + ext).c_str(), (key_path + "server_pub" + ext).c_str());
+    EC_KEY_free(skeypair);
 
     cout << "seed data to db complete." << endl;
 }

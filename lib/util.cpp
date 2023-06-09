@@ -252,7 +252,7 @@ unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned 
     if (PRINT_MESSAGES)
         cout << ">> Recived cipher: " << bin_to_hex(cipher, cipher_len) << endl;
     unsigned char *message = crypter::decryptAES(cipher, cipher_len, message_len, key);
-    if (PRINT_ENCRYPT_MESSAGES)
+    if (PRINT_DECRYPT_MESSAGES)
         cout << ">> Decrypted(Hex): " << bin_to_hex(message, *message_len) << endl;
     return message;
 }

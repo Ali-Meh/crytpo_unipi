@@ -269,40 +269,6 @@ namespace rsa
     }
 
     // Function to decrypt a message using RSA private key
-    string decryptPrvRSA(const string &encryptedMessage, const string &privateKeyPath)
-    {
-        FILE *privateKeyFile = fopen(privateKeyPath.c_str(), "rb");
-        if (!privateKeyFile)
-        {
-            perror("Failed to open private key file");
-            return "";
-        }
-
-        RSA *rsa = PEM_read_RSAPrivateKey(privateKeyFile, nullptr, nullptr, nullptr);
-        fclose(privateKeyFile);
-
-        if (!rsa)
-        {
-            ERR_print_errors_fp(stderr);
-            return "";
-        }
-
-        int decryptedSize = RSA_size(rsa);
-        vector<unsigned char> decrypted(decryptedSize);
-
-        int result = RSA_private_decrypt(encryptedMessage.size(), reinterpret_cast<const unsigned char *>(encryptedMessage.c_str()),
-                                         decrypted.data(), rsa, RSA_PKCS1_PADDING);
-        if (result == -1)
-        {
-            ERR_print_errors_fp(stderr);
-            RSA_free(rsa);
-            return "";
-        }
-
-        RSA_free(rsa);
-
-        return string(reinterpret_cast<const char *>(decrypted.data()), result);
-    }
     unsigned char *decryptPrvRSA(unsigned char *cipher, size_t cipher_len, EVP_PKEY *privateKey, size_t &decrypted_len)
     {
         if (!cipher || cipher_len == 0 || !privateKey)
@@ -359,6 +325,40 @@ namespace rsa
         EVP_PKEY_CTX_free(ctx);
         decrypted_len = outlen;
         return decrypted;
+    }
+    string decryptPrvRSA(const string &encryptedMessage, const string &privateKeyPath)
+    {
+        FILE *privateKeyFile = fopen(privateKeyPath.c_str(), "rb");
+        if (!privateKeyFile)
+        {
+            perror("Failed to open private key file");
+            return "";
+        }
+
+        RSA *rsa = PEM_read_RSAPrivateKey(privateKeyFile, nullptr, nullptr, nullptr);
+        fclose(privateKeyFile);
+
+        if (!rsa)
+        {
+            ERR_print_errors_fp(stderr);
+            return "";
+        }
+
+        int decryptedSize = RSA_size(rsa);
+        vector<unsigned char> decrypted(decryptedSize);
+
+        int result = RSA_private_decrypt(encryptedMessage.size(), reinterpret_cast<const unsigned char *>(encryptedMessage.c_str()),
+                                         decrypted.data(), rsa, RSA_PKCS1_PADDING);
+        if (result == -1)
+        {
+            ERR_print_errors_fp(stderr);
+            RSA_free(rsa);
+            return "";
+        }
+
+        RSA_free(rsa);
+
+        return string(reinterpret_cast<const char *>(decrypted.data()), result);
     }
 
     unsigned char *calculateSharedSecret(DH *dhParams, const unsigned char *publicKey, size_t publicKeyLen, size_t &sharedSecretLen)

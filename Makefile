@@ -1,6 +1,8 @@
 build:
 	g++ -o main main.cpp -lssl -lm -lcrypto -l sqlite3 && ./main
-	
+
+clear:
+	clear
 	
 db:
 	cd lib && g++ -o main db.cpp -lssl -lm -lcrypto -l sqlite3 && ./main
@@ -11,11 +13,11 @@ hash:
 	cd lib && g++ -o main hash.cpp -lssl -lm -lcrypto -l sqlite3 && ./main
 
 
-ser:
+ser:clear
 	cd server && g++ -o server server.cpp -lssl -lm -lcrypto -l sqlite3 && ./server
 
 
-cli:
+cli:clear
 	cd client && g++ -o client client.cpp -lssl -lm -lcrypto -l sqlite3 && ./client
 aes:
 	cd lib && g++ -o temp AES.cpp -lssl -lm -lcrypto -l sqlite3 && ./temp
@@ -25,5 +27,7 @@ ec:
 
 nc:
 	nc localhost 8080
+
+
 
 ..PHONY: server client aes

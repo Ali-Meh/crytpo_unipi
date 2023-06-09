@@ -6,6 +6,8 @@
 
 #define BUFFER_SIZE 1025
 
+#define TRANSACTION_LIMIT 10
+
 // Authentication constants
 #define RAND_BUFFER_SIZE 16
 #define TIME_BUFFER_SIZE 64
@@ -22,10 +24,7 @@
 #define MAX_FIELD_LENGTH 255
 #define MAX_MSG_LENGTH 1024
 
-// Diffie-Hellman parameters
-// const int DH_PARAM_SIZE = 2048;
-
 // Verbose
-#define PRINT_ENCRYPT_MESSAGES TRUE
+#define PRINT_ENCRYPT_MESSAGES FALSE
 #define PRINT_DECRYPT_MESSAGES TRUE
 #define PRINT_MESSAGES TRUE

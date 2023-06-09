@@ -2,7 +2,9 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <cstring>
+#include <sstream>
 #include "vector"
+#include "const.h"
 
 using namespace std;
 
@@ -13,10 +15,113 @@ struct sba_transaction_t
     string encTransaction; // (user, amount, timestamp).
 };
 
+constexpr char base64_chars[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+string base64_encode(const string &input)
+{
+    ostringstream encoded;
+    int val = 0;
+    int valb = -6;
+    for (char c : input)
+    {
+        val = (val << 8) + static_cast<unsigned char>(c);
+        valb += 8;
+        while (valb >= 0)
+        {
+            encoded << base64_chars[(val >> valb) & 0x3F];
+            valb -= 6;
+        }
+    }
+
+    if (valb > -6)
+        encoded << base64_chars[((val << 8) >> (valb + 8)) & 0x3F];
+
+    while (encoded.tellp() % 4 != 0)
+        encoded << '=';
+
+    return encoded.str();
+}
+
+std::string base64_decode(const std::string &input)
+{
+
+    std::string decoded;
+    int val = 0;
+    int valb = -8;
+    for (char c : input)
+    {
+        if (c == '=')
+            break;
+        if (c >= 'A' && c <= 'Z')
+            c -= 'A';
+        else if (c >= 'a' && c <= 'z')
+            c = c - 'a' + 26;
+        else if (c >= '0' && c <= '9')
+            c = c - '0' + 52;
+        else if (c == '+')
+            c = 62;
+        else if (c == '/')
+            c = 63;
+        else
+            continue;
+
+        val = (val << 6) + c;
+        valb += 6;
+        if (valb >= 0)
+        {
+            decoded.push_back(static_cast<char>((val >> valb) & 0xFF));
+            valb -= 8;
+        }
+    }
+
+    return decoded;
+}
+
+string serializeTransactionsToString(const vector<sba_transaction_t> &transactions)
+{
+    ostringstream oss;
+    for (const auto &transaction : transactions)
+    {
+        oss << transaction.id << ','
+            << transaction.userId << ','
+            << transaction.encTransaction << '\n';
+    }
+
+    return oss.str();
+}
+
+vector<sba_transaction_t> deserializeTransactionsFromString(const string &serialized)
+{
+    vector<sba_transaction_t> transactions;
+
+    istringstream iss(serialized);
+    string line;
+    while (getline(iss, line))
+    {
+        istringstream lineStream(line);
+        string field;
+        getline(lineStream, field, ',');
+        int id = stoi(field);
+        getline(lineStream, field, ',');
+        int userId = stoi(field);
+        getline(lineStream, field, ',');
+        string encTransaction = field;
+
+        sba_transaction_t transaction;
+        transaction.id = id;
+        transaction.userId = userId;
+        transaction.encTransaction = encTransaction;
+
+        transactions.push_back(transaction);
+    }
+
+    return transactions;
+}
+
 // Function to handle errors
 static int errorHandler(void *data, int errorCode, const char *errorMessage)
 {
-    std::cerr << "Error (" << errorCode << "): " << errorMessage << std::endl;
+    cerr << "Error (" << errorCode << "): " << errorMessage << endl;
     return 0;
 }
 
@@ -38,7 +143,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_OK)
     {
         // Handle error preparing the first update statement
-        std::cerr << "Error preparing update statement: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error preparing update statement: " << sqlite3_errmsg(db) << endl;
         return rc;
     }
 
@@ -50,7 +155,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_DONE)
     {
         // Handle error executing the first update statement
-        std::cerr << "Error deducting from senders balance: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error deducting from senders balance: " << sqlite3_errmsg(db) << endl;
         sqlite3_finalize(stmt);
         return rc;
     }
@@ -62,7 +167,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_OK)
     {
         // Handle error preparing the second update statement
-        std::cerr << "Error preparing update statement: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error preparing update statement: " << sqlite3_errmsg(db) << endl;
         return rc;
     }
 
@@ -74,7 +179,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_DONE)
     {
         // Handle error executing the second update statement
-        std::cerr << "Error adding to recievers balance: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error adding to recievers balance: " << sqlite3_errmsg(db) << endl;
         sqlite3_finalize(stmt);
         return rc;
     }
@@ -86,7 +191,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_OK)
     {
         // Handle error preparing the second update statement
-        std::cerr << "Error preparing insert statement: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error preparing insert statement: " << sqlite3_errmsg(db) << endl;
         return rc;
     }
 
@@ -99,7 +204,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_DONE)
     {
         // Handle error executing the second update statement
-        std::cerr << "Error inserting transaction: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error inserting transaction: " << sqlite3_errmsg(db) << endl;
         sqlite3_finalize(stmt);
         return rc;
     }
@@ -115,39 +220,53 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     sqlite3_finalize(stmt);
     return SQLITE_OK;
 }
+// Define transaction callback function for SELECT queries
+static int trxSelectCallback(void *data, int argc, char **argv, char **azColName)
+{
+    vector<sba_transaction_t> *trxs = reinterpret_cast<vector<sba_transaction_t> *>(data);
+    sba_transaction_t trx;
+
+    for (int i = 0; i < argc; i++)
+    {
+        string colName = azColName[i];
+        string colValue = argv[i] ? argv[i] : "";
+
+        if (colName == "Id")
+        {
+            trx.id = stoi(colValue);
+        }
+        else if (colName == "user_id")
+        {
+            trx.userId = stoi(colValue);
+        }
+        else if (colName == "enc_transaction")
+        {
+            trx.encTransaction = colValue;
+        }
+    }
+
+    trxs->push_back(trx);
+    return 0;
+}
 
 // Function to retrieve a transaction by ID
-sba_transaction_t getTransactionById(sqlite3 *db, int id)
+vector<sba_transaction_t> getTransactionsById(sqlite3 *db, int userId, int limit = TRANSACTION_LIMIT)
 {
-    sba_transaction_t trx;
-    sqlite3_stmt *stmt;
-    const char *query = "SELECT * FROM Transactions WHERE Id = ?";
+    vector<sba_transaction_t> trxs;
+    string sql = "SELECT * FROM Transactions WHERE user_id = '" + to_string(userId) + "'" + " order by Id desc limit " + to_string(limit);
 
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    char *errorMsg = nullptr;
+    int rc = sqlite3_exec(db, sql.c_str(), trxSelectCallback, &trxs, &errorMsg);
+
+    if (rc != SQLITE_OK)
     {
-        std::cerr << "Error preparing select statement: " << sqlite3_errmsg(db) << std::endl;
-        return trx;
+        cerr << "Error querying database: " << errorMsg << endl;
+        sqlite3_free(errorMsg);
+        sqlite3_close(db);
+        exit(1);
     }
 
-    // Bind value to prepared statement
-    sqlite3_bind_int(stmt, 1, id);
-
-    // Execute statement
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        std::cerr << "Error selecting transaction: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_finalize(stmt);
-        return trx;
-    }
-
-    // Create transaction object from result
-    // trx = new sba_transaction_t;
-    trx.id = sqlite3_column_int(stmt, 0);
-    trx.userId = sqlite3_column_int(stmt, 1);
-    trx.encTransaction = (char *)sqlite3_column_blob(stmt, 2);
-
-    sqlite3_finalize(stmt);
-    return trx;
+    return trxs;
 }
 
 // Define the struct for the client data
@@ -160,7 +279,6 @@ struct sba_client_t
     double balance;
     int nonce;
 };
-
 // Define the callback function for SELECT queries
 static int selectCallback(void *data, int argc, char **argv, char **azColName)
 {
@@ -201,7 +319,6 @@ static int selectCallback(void *data, int argc, char **argv, char **azColName)
     clients->push_back(client);
     return 0;
 }
-
 // Function to get client information by ID
 sba_client_t getClientById(int id)
 {
@@ -272,13 +389,6 @@ vector<sba_client_t> getClientByUsername(sqlite3 *db, const string &username)
         exit(1);
     }
 
-    // if (clients.empty())
-    // {
-    //     cerr << "Client not found" << endl;
-    //     sqlite3_close(db);
-    //     exit(1);
-    // }
-
     return clients;
 }
 
@@ -305,14 +415,14 @@ int insertClient(sqlite3 *db, const sba_client_t &client)
 void updateClient(sqlite3 *db, const sba_client_t &client)
 {
     // Construct the SQL query string with placeholders for the values
-    std::string sql = "UPDATE clients SET username = ?, password = ?, pubkey = ?, balance = ?, nonce = ? WHERE id = ?";
+    string sql = "UPDATE clients SET username = ?, password = ?, pubkey = ?, balance = ?, nonce = ? WHERE id = ?";
 
     // Create a prepared statement object
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
-        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error preparing statement: " << sqlite3_errmsg(db) << endl;
         return;
     }
 
@@ -328,14 +438,14 @@ void updateClient(sqlite3 *db, const sba_client_t &client)
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE)
     {
-        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
+        cerr << "Error executing statement: " << sqlite3_errmsg(db) << endl;
         return;
     }
 
     // Finalize the statement
     sqlite3_finalize(stmt);
 
-    std::cout << "Client " << client.id << " updated successfully!" << std::endl;
+    cout << "Client " << client.id << " updated successfully!" << endl;
 }
 
 sqlite3 *connect(string file = "SBA.db")

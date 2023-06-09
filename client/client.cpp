@@ -10,6 +10,7 @@
 #include <termios.h>
 #include "../lib/hash.cpp" //Code for processing hashing
 #include "../lib/RSA.cpp"
+#include "../lib/db.cpp" //Code for processing db
 #include "../lib/EC.cpp"
 #include "../lib/const.h"
 
@@ -293,6 +294,23 @@ public:
             // Send transfer command with username and amount
             else if (current_command == "list" || current_command == "2")
             {
+                command = to_string(Commands::List);
+
+                // encrypt command
+                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
+
+                // Receive response from server
+                result = recieveAndDecryptMsg(sock, &result_len, session_key);
+                std::vector<sba_transaction_t> trxs = deserializeTransactionsFromString(split(string((char *)result, result_len), ':')[1]);
+                for (const auto &transaction : trxs)
+                {
+                    string cipher = base64_decode(transaction.encTransaction);
+                    size_t plaintext_len = 0;
+                    unsigned char *plaintext = rsa::decryptPrvRSA((unsigned char *)cipher.c_str(), size_t(cipher.size()), client_private_key, plaintext_len);
+                    string trx = string((char *)plaintext, plaintext_len);
+                    std::cout
+                        << "ID: " << transaction.id << ", UserID: " << transaction.userId << ", Transaction: " << trx << std::endl;
+                }
             }
             // Send transfer command with username and amount
             else if (current_command == "exit" || current_command == "3")
@@ -302,6 +320,7 @@ public:
             else
             {
                 cout << "Not a valid command try agian." << endl;
+                continue;
             }
 
             free(result);

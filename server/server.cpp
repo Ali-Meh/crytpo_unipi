@@ -229,7 +229,7 @@ public:
         string trx_msg(receiver.username + ":" + to_string(amount) + ":" + to_string(stamp));
         string enc_trx = rsa::encryptPubRSA(trx_msg, sender.pubkey);
 
-        sba_transaction_t transaction = {0, sender.id, enc_trx};
+        sba_transaction_t transaction = {0, sender.id, base64_encode(enc_trx)};
         if (transferToReceiver(db, transaction, receiver.id, amount) != 0)
         {
             string result = generateResult(Errors::Todo);
@@ -238,6 +238,29 @@ public:
         }
 
         string result = generateResult(Errors::Null, to_string(amount) + "$ to " + receiver.username);
+        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+        return 1;
+    }
+    int onList(vector<string> args, sba_client_conn conn)
+    {
+        cout << "onList... " << endl;
+        vector<sba_transaction_t> db_transactions = getTransactionsById(db, conn.user_session.id);
+        if (db_transactions.empty())
+        {
+            string result = generateResult(Errors::NotFound);
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            return 0;
+        }
+        if (PRINT_MESSAGES)
+        {
+            for (const auto &transaction : db_transactions)
+            {
+                std::cout
+                    << "ID: " << transaction.id << ", UserID: " << transaction.userId << ", encTransaction: " << transaction.encTransaction << std::endl;
+            }
+        }
+
+        string result = generateResult(Errors::Null, serializeTransactionsToString(db_transactions));
         encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
         return 1;
     }
@@ -396,6 +419,7 @@ public:
                         case Commands::List:
                             if (!checkUserIsAuthenticated(&client_sockets[i]))
                                 continue;
+                            onList(args, client_sockets[i]);
                             break;
                         case Commands::Transfer:
                             if (!checkUserIsAuthenticated(&client_sockets[i]))

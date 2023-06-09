@@ -237,8 +237,6 @@ public:
             return 0;
         }
 
-        insertTransaction(db, transaction);
-        cout << "saving transaction: " << trx_msg;
         string result = generateResult(Errors::Null, to_string(amount) + "$ to " + receiver.username);
         encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
         return 1;

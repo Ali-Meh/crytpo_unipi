@@ -20,34 +20,6 @@ static int errorHandler(void *data, int errorCode, const char *errorMessage)
     return 0;
 }
 
-// Function to insert a new transaction
-int insertTransaction(sqlite3 *db, const sba_transaction_t &transaction)
-{
-    sqlite3_stmt *stmt;
-    const char *query = "INSERT INTO Transactions (user_id, enc_transaction) VALUES (?, ?)";
-
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
-        std::cerr << "Error preparing insert statement: " << sqlite3_errmsg(db) << std::endl;
-        return -1;
-    }
-
-    // Bind values to prepared statement
-    sqlite3_bind_int(stmt, 1, transaction.userId);
-    sqlite3_bind_blob(stmt, 2, transaction.encTransaction.data(), transaction.encTransaction.size(), SQLITE_STATIC);
-
-    // Execute statement
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        std::cerr << "Error inserting transaction: " << sqlite3_errmsg(db) << std::endl;
-        sqlite3_finalize(stmt);
-        return -1;
-    }
-
-    sqlite3_finalize(stmt);
-    return sqlite3_last_insert_rowid(db);
-}
-
 // Function to Transfer amounts between user accounts and
 int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int receiver, double amount)
 {
@@ -66,6 +38,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_OK)
     {
         // Handle error preparing the first update statement
+        std::cerr << "Error preparing update statement: " << sqlite3_errmsg(db) << std::endl;
         return rc;
     }
 
@@ -77,6 +50,8 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_DONE)
     {
         // Handle error executing the first update statement
+        std::cerr << "Error deducting from senders balance: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
         return rc;
     }
 
@@ -87,6 +62,7 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_OK)
     {
         // Handle error preparing the second update statement
+        std::cerr << "Error preparing update statement: " << sqlite3_errmsg(db) << std::endl;
         return rc;
     }
 
@@ -98,6 +74,33 @@ int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int re
     if (rc != SQLITE_DONE)
     {
         // Handle error executing the second update statement
+        std::cerr << "Error adding to recievers balance: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return rc;
+    }
+
+    sqlite3_reset(stmt);
+
+    rc = sqlite3_prepare_v2(db, "INSERT INTO Transactions (user_id, enc_transaction) VALUES (?, ?);", -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        // Handle error preparing the second update statement
+        std::cerr << "Error preparing insert statement: " << sqlite3_errmsg(db) << std::endl;
+        return rc;
+    }
+
+    // Bind values to prepared statement
+    sqlite3_bind_int(stmt, 1, transaction.userId);
+    sqlite3_bind_blob(stmt, 2, transaction.encTransaction.data(), transaction.encTransaction.size(), SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        // Handle error executing the second update statement
+        std::cerr << "Error inserting transaction: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
         return rc;
     }
 
@@ -145,46 +148,6 @@ sba_transaction_t getTransactionById(sqlite3 *db, int id)
 
     sqlite3_finalize(stmt);
     return trx;
-}
-
-bool updateTransaction(sqlite3 *db, const sba_transaction_t &transaction)
-{
-    std::string sql = "UPDATE Transactions SET enc_transaction = ? WHERE Id = ?";
-    sqlite3_stmt *stmt = nullptr;
-
-    int rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK)
-    {
-        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << '\n';
-        return false;
-    }
-
-    rc = sqlite3_bind_blob(stmt, 1, transaction.encTransaction.data(), transaction.encTransaction.size(), SQLITE_TRANSIENT);
-    if (rc != SQLITE_OK)
-    {
-        std::cerr << "Failed to bind enc_transaction: " << sqlite3_errmsg(db) << '\n';
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    rc = sqlite3_bind_int(stmt, 2, transaction.id);
-    if (rc != SQLITE_OK)
-    {
-        std::cerr << "Failed to bind Id: " << sqlite3_errmsg(db) << '\n';
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE)
-    {
-        std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << '\n';
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    sqlite3_finalize(stmt);
-    return true;
 }
 
 // Define the struct for the client data

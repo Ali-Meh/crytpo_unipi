@@ -29,5 +29,12 @@ nc:
 	nc localhost 8080
 
 
+sercheck:
+	cd server && g++ -o server server.cpp -lssl -lm -lcrypto -l sqlite3 -ggdb3 && valgrind --leak-check=full \
+			--show-leak-kinds=all \
+			--track-origins=yes \
+			--verbose \
+			--log-file=valgrind-out.txt ./server
+
 
 ..PHONY: server client aes

@@ -79,6 +79,7 @@ public:
         // Cleanup
         EVP_PKEY_free(peer_pub_key);
         free(peer_pubkey);
+        free(nonce);
         free(sk);
         return 1;
     }
@@ -90,7 +91,7 @@ class Server
     const static int max_clients = 30;
     int master_socket, addrlen, new_socket, activity, i, valread, sd, max_sd;
     sba_client_conn client_sockets[max_clients];
-    EC_KEY *private_key;
+    EVP_PKEY *private_key;
 
     // set of socket descriptors
     fd_set readfds;
@@ -156,6 +157,11 @@ public:
             exit(1);
         }
     }
+    ~Server()
+    {
+        EVP_PKEY_free(private_key);
+        sqlite3_close(db);
+    }
     int onLogin(vector<string> args, sba_client_conn *conn)
     {
         cout << "onLogin..." << endl;
@@ -163,14 +169,14 @@ public:
         if (db_users.empty() || !verify_password(args[2], db_users[0].password))
         {
             string result = generateResult(Errors::WrongCredentials, "you might retry");
-            encryptAndSendmsg((*conn).sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)(*conn).session_key.c_str());
+            encryptAndSendmsg(conn->sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn->session_key.c_str());
             return 0;
         }
         printf("found user id %d\n", db_users[0].id);
-        (*conn).user_session = db_users[0];
-        cout << "user logged in as: " << (*conn).user_session.username << endl;
-        string result = generateResult(Errors::Null, "Loggedin Successfully as " + (*conn).user_session.username);
-        encryptAndSendmsg((*conn).sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)(*conn).session_key.c_str());
+        conn->user_session = db_users[0];
+        cout << "user logged in as: " << conn->user_session.username << endl;
+        string result = generateResult(Errors::Null, "Loggedin Successfully as " + conn->user_session.username);
+        encryptAndSendmsg(conn->sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn->session_key.c_str());
         return 1;
     }
     int onBalance(vector<string> args, sba_client_conn conn)
@@ -384,7 +390,7 @@ public:
                 if (FD_ISSET(sd, &readfds))
                 {
                     // establish session key
-                    if (client_sockets[i].session_key.empty() && client_sockets[i].exchange_keys(convertToEVP(private_key)) <= 0)
+                    if (client_sockets[i].session_key.empty() && client_sockets[i].exchange_keys(private_key) <= 0)
                     {
                         printf("Failed to Exchange Keys with client on ip %s , port %d \n",
                                inet_ntoa(address.sin_addr), ntohs(address.sin_port));

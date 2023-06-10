@@ -126,38 +126,6 @@ void save_keypair_to_file(EC_KEY *keypair, const char *private_key_path, const c
         BIO_free(public_key_bio);
     }
 }
-
-EC_KEY *load_private_key(string private_key_path)
-{
-    EC_KEY *keypair = nullptr;
-
-    // Load the private key from file
-    // Replace this implementation with your own file loading logic
-    // Example:
-    BIO *private_key_bio = BIO_new_file(private_key_path.c_str(), "r");
-    if (private_key_bio)
-    {
-        keypair = PEM_read_bio_ECPrivateKey(private_key_bio, nullptr, nullptr, nullptr);
-        BIO_free(private_key_bio);
-    }
-    return keypair;
-}
-
-EC_KEY *load_public_key(const char *filename = PUB_FILE)
-{
-    FILE *file = fopen(filename, "rb");
-    if (file == nullptr)
-    {
-        printf("WARN|load_public_key: couldn't load file: %s\n", filename);
-        return nullptr;
-    }
-
-    EC_KEY *keypair = PEM_read_EC_PUBKEY(file, nullptr, nullptr, nullptr);
-    fclose(file);
-
-    return keypair;
-}
-
 EVP_PKEY *convertToEVP(EC_KEY *private_key)
 {
     EVP_PKEY *evp_key = EVP_PKEY_new();
@@ -208,7 +176,42 @@ EVP_PKEY *convertToEVP(unsigned char *pub_key, unsigned int pub_len)
     //     EVP_PKEY_free(evp_key);
     //     return nullptr;
     // }
-    return convertToEVP(loaded_key);
+    EVP_PKEY *key = convertToEVP(loaded_key);
+    EC_KEY_free(loaded_key);
+    return key;
+}
+
+EVP_PKEY *load_private_key(string private_key_path)
+{
+    EC_KEY *keypair = nullptr;
+
+    // Load the private key from file
+    // Replace this implementation with your own file loading logic
+    // Example:
+    BIO *private_key_bio = BIO_new_file(private_key_path.c_str(), "r");
+    if (private_key_bio)
+    {
+        keypair = PEM_read_bio_ECPrivateKey(private_key_bio, nullptr, nullptr, nullptr);
+        BIO_free(private_key_bio);
+    }
+    EVP_PKEY *key = convertToEVP(keypair);
+    EC_KEY_free(keypair);
+    return key;
+}
+
+EC_KEY *load_public_key(const char *filename = PUB_FILE)
+{
+    FILE *file = fopen(filename, "rb");
+    if (file == nullptr)
+    {
+        printf("WARN|load_public_key: couldn't load file: %s\n", filename);
+        return nullptr;
+    }
+
+    EC_KEY *keypair = PEM_read_EC_PUBKEY(file, nullptr, nullptr, nullptr);
+    fclose(file);
+
+    return keypair;
 }
 
 unsigned char *extractPrivateKey(EC_KEY *private_key, size_t &private_key_length)

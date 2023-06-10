@@ -198,7 +198,8 @@ int encryptAndSendmsg(int sd, unsigned char *message, int messageLength, unsigne
         cout << "<< Sending Message: " << bin_to_hex(message, messageLength) << endl;
     if (PRINT_ENCRYPT_MESSAGES)
         cout << "<< Encrypted(Hex): " << bin_to_hex(cipher, cipher_len) << endl;
-    return cipher_len;
+    free(cipher);
+    return ret;
 }
 int sendMessageWithSize(int sd, string message)
 {
@@ -254,6 +255,7 @@ unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned 
     unsigned char *message = crypter::decryptAES(cipher, cipher_len, message_len, key);
     if (PRINT_DECRYPT_MESSAGES)
         cout << ">> Decrypted(Hex): " << bin_to_hex(message, *message_len) << endl;
+    free(cipher);
     return message;
 }
 // Generate a random and fresh nonce

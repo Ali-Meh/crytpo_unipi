@@ -153,7 +153,6 @@ unsigned char *decryptAES(unsigned char *ciphertext, int cipherSize, unsigned in
     }
 
     EVP_CIPHER_CTX_free(ctx);
-    free(ciphertext);
     return plaintext;
 }
 

@@ -70,37 +70,3 @@ bool verify_password(const string &input, const string &current)
     EVP_MD_CTX_free(context);
     return result;
 }
-
-// int main()
-// {
-//     // Hash a password and store it
-//     string hashed_password = hash_password("password1123");
-
-//     // Split the hashed password into salt and hash
-//     vector<string> splitted = split(hashed_password, ':');
-//     string salt = splitted[0];
-//     string stored_hash = splitted[1];
-
-//     // Verify a password
-//     // string input_password;
-//     // cout << "Enter password: ";
-//     // cin >> input_password;
-
-//     cout << "password hash=> " << hashed_password << endl;
-//     bool r = verify_password("input_password", hashed_password);
-//     cout << r << endl;
-
-//     r = verify_password("password1123", hashed_password);
-//     cout << r << endl;
-
-//     // if (verify_password(input_password, hashed_password))
-//     // {
-//     //     cout << "Password is correct!" << endl;
-//     // }
-//     // else
-//     // {
-//     //     cout << "Incorrect password." << endl;
-//     // }
-
-//     return 0;
-// }

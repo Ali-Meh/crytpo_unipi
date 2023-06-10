@@ -78,6 +78,7 @@ public:
         encryptAndSendmsg(sd, nonce, NONCE_SIZE, (unsigned char *)session_key.c_str());
 
         // Cleanup
+        EVP_PKEY_free(peer_pub_key);
         free(peer_pubkey);
         free(sk);
         return 1;
@@ -100,21 +101,21 @@ class Server
 
     // welcome message
     char *message = (char *)"Welcome to SBA server v1.0 \r\n";
-    void close_and_free_socket(sba_client_conn client_socket)
+    void close_and_free_socket(sba_client_conn *client_socket)
     {
         // Close the socket and mark as 0 in list for reuse
-        close(client_socket.sd);
-        client_socket.in_use = false;
-        client_socket.sd = 0;
-        client_socket.session_key = "";
+        close(client_socket->sd);
+        client_socket->in_use = false;
+        client_socket->sd = 0;
+        client_socket->session_key = "";
     }
-    void onClientDisconnect(sba_client_conn client_socket)
+    void onClientDisconnect(sba_client_conn *client_socket)
     {
         // Somebody disconnected , get his details and print
-        getpeername(client_socket.sd, (struct sockaddr *)&address,
+        getpeername(client_socket->sd, (struct sockaddr *)&address,
                     (socklen_t *)&addrlen);
         printf("Host disconnected , ip %s , port %d, sock %d\n",
-               inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_socket.sd);
+               inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_socket->sd);
 
         // Close the socket and mark as 0 in list for reuse
         close_and_free_socket(client_socket);
@@ -388,7 +389,7 @@ public:
                     {
                         printf("Failed to Exchange Keys with client on ip %s , port %d \n",
                                inet_ntoa(address.sin_addr), ntohs(address.sin_port));
-                        close_and_free_socket(client_sockets[i]);
+                        onClientDisconnect(&client_sockets[i]);
                     }
                     else if (client_sockets[i].in_use)
                     {
@@ -398,7 +399,8 @@ public:
                         unsigned char *command = recieveAndDecryptMsg(sd, &command_len, (unsigned char *)client_sockets[i].session_key.c_str());
                         if (command == NULL)
                         {
-                            onClientDisconnect(client_sockets[i]);
+                            onClientDisconnect(&client_sockets[i]);
+                            free(command);
                             continue;
                         }
                         string command_str((char *)command, command_len);

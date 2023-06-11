@@ -194,7 +194,7 @@ public:
         size_t secret_length = 0;
         session_key = deriveSharedKey(convertToEVP(client_key), server_public_key, &secret_length);
         cout << "Client shared Secret: ";
-        for (int i = 0; i < secret_length; i++)
+        for (size_t i = 0; i < secret_length; i++)
         {
             printf("%02x", session_key[i]);
         }

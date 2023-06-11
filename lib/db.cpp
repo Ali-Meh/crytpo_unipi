@@ -118,13 +118,6 @@ vector<sba_transaction_t> deserializeTransactionsFromString(const string &serial
     return transactions;
 }
 
-// Function to handle errors
-static int errorHandler(void *data, int errorCode, const char *errorMessage)
-{
-    cerr << "Error (" << errorCode << "): " << errorMessage << endl;
-    return 0;
-}
-
 // Function to Transfer amounts between user accounts and
 int transferToReceiver(sqlite3 *db, const sba_transaction_t &transaction, int receiver, double amount)
 {

@@ -360,7 +360,7 @@ public:
                 printf("New connection , socket fd is %d , ip is : %s , port : %d \n ", new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
                 // send new connection greeting message
-                if (send(new_socket, message, strlen(message), 0) != strlen(message))
+                if (send(new_socket, message, strlen(message), 0) != ssize_t(strlen(message)))
                 {
                     perror("send");
                 }
@@ -398,8 +398,6 @@ public:
                     }
                     else if (client_sockets[i].in_use)
                     {
-                        int ret = 0;
-
                         unsigned int command_len = 0;
                         unsigned char *command = recieveAndDecryptMsg(sd, &command_len, (unsigned char *)client_sockets[i].session_key.c_str());
                         if (command == NULL)

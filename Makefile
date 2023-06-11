@@ -36,5 +36,12 @@ sercheck:
 			--verbose \
 			--log-file=valgrind-out.txt ./server
 
+clicheck:
+	cd client && g++ -o client client.cpp -lssl -lm -lcrypto -l sqlite3 -ggdb3 && valgrind --leak-check=full \
+			--show-leak-kinds=all \
+			--track-origins=yes \
+			--verbose \
+			--log-file=valgrind-out.txt ./client
+
 
 ..PHONY: server client aes

@@ -179,13 +179,13 @@ public:
 
         size_t pub_len = 0;
         unsigned char *client_public_key = extractPublicKey(client_key, pub_len);
-        unsigned char *cpk = extractPrivateKey(client_key, pub_len);
+        // unsigned char *cpk = extractPrivateKey(client_key, pub_len);
 
         // Send temprory public key to the server (e.g., over network) M1
         sendMessageWithSize(sock, client_public_key, pub_len);
-        cout << "PEM: \n"
-             << client_public_key << endl
-             << cpk;
+        // cout << "PEM: \n"
+        //      << client_public_key << endl;
+        //  << cpk;
 
         printECDH("Client pub_key: ", convertToEVP(client_key));
         printECDH("Server pub_key: ", server_public_key);
@@ -210,6 +210,7 @@ public:
         unsigned int message_len = 0;
         unsigned char *message = recieveAndDecryptMsg(sock, &message_len, session_key);
         cout << "Authenticated with server: " << message << endl;
+        free(message);
     }
     void login()
     {

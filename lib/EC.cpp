@@ -7,11 +7,26 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/x509_vfy.h>
 
 const char *PUB_FILE = "keys/server_pub.pem";
 const char *PRV_FILE = "keys/server_sec.pem";
 
 using namespace std;
+
+// Function to handle OpenSSL errors
+void handleOpenSSLErrors()
+{
+    unsigned long error;
+    while ((error = ERR_get_error()) != 0)
+    {
+        char *errStr = ERR_error_string(error, nullptr);
+        if (errStr)
+        {
+            std::cerr << "OpenSSL error: " << errStr << std::endl;
+        }
+    }
+}
 
 // deriveSharedKey for ECDH algorithm and hash the secret generated into sha256 as it's recommended for more security
 unsigned char *deriveSharedKey(EVP_PKEY *ec_key, EVP_PKEY *peer_pubkey, size_t *skey_len)
@@ -366,4 +381,76 @@ string pubkey_tostring(EC_KEY *keypair)
     EVP_PKEY_free(evp_pubkey);
 
     return pubkey_pem;
+}
+
+// Function to receive the server's certificate
+X509 *receiveCertificate(int sockfd)
+{
+    X509 *certificate = nullptr;
+    BIO *bio = BIO_new(BIO_s_socket());
+    BIO_set_fd(bio, sockfd, BIO_NOCLOSE);
+
+    certificate = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    if (!certificate)
+    {
+        std::cerr << "Failed to read the server's certificate." << std::endl;
+        handleOpenSSLErrors();
+        exit(EXIT_FAILURE);
+    }
+
+    BIO_free(bio);
+
+    return certificate;
+}
+
+// Function to verify the server's certificate with the root CA certificate and CRL
+bool verifyCertificate(X509 *certificate)
+{
+    EVP_PKEY *publicKey = X509_get_pubkey(certificate);
+    if (publicKey == nullptr)
+    {
+        std::cerr << "Failed to extract public key from the certificate." << std::endl;
+        return false;
+    }
+
+    X509_STORE *store = X509_STORE_new();
+    X509_LOOKUP *lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
+    if (!lookup)
+    {
+        std::cerr << "Failed to create X509 lookup." << std::endl;
+        return false;
+    }
+
+    // Load the root CA certificate
+    if (X509_LOOKUP_load_file(lookup, ROOT_CA_CERT_PATH, X509_FILETYPE_PEM) != 1)
+    {
+        std::cerr << "Failed to load root CA certificate." << std::endl;
+        return false;
+    }
+
+    // Load the CRL file
+    if (X509_STORE_load_locations(store, ROOT_CA_CRL_PATH, nullptr) != 1)
+    {
+        std::cerr << "Failed to load CRL file." << std::endl;
+        return false;
+    }
+
+    X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK);
+
+    X509_STORE_CTX *storeCtx = X509_STORE_CTX_new();
+    X509_STORE_CTX_init(storeCtx, store, certificate, nullptr);
+
+    int verifyResult = X509_verify_cert(storeCtx);
+    X509_STORE_CTX_free(storeCtx);
+    X509_STORE_free(store);
+
+    EVP_PKEY_free(publicKey);
+
+    if (verifyResult != 1)
+    {
+        std::cerr << "Failed to verify the server's certificate." << std::endl;
+        return false;
+    }
+
+    return true;
 }

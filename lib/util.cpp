@@ -259,7 +259,7 @@ unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned 
     return message;
 }
 // Generate a random and fresh nonce
-int createNonce(unsigned char *buffer)
+unsigned char *createNonce()
 {
 
     int ret;
@@ -269,20 +269,20 @@ int createNonce(unsigned char *buffer)
     if (!randomBuf)
     {
         cerr << "Error allocating unsigned buffer for random bytes\n";
-        return 0;
+        return NULL;
     }
     RAND_poll();
     ret = RAND_bytes(randomBuf, RAND_BUFFER_SIZE);
     if (!ret)
     {
         cerr << "Error generating random bytes\n";
-        return 0;
+        return NULL;
     }
     char *random = (char *)malloc(RAND_BUFFER_SIZE);
     if (!random)
     {
         cerr << "Error allocating buffer for random bytes *\n";
-        return 0;
+        return NULL;
     }
     memcpy(random, randomBuf, RAND_BUFFER_SIZE);
     free(randomBuf);
@@ -292,7 +292,7 @@ int createNonce(unsigned char *buffer)
     if (!now)
     {
         cerr << "Error allocating buffer for date and time\n";
-        return 0;
+        return NULL;
     }
     time_t currTime;
     tm *currentTime;
@@ -301,13 +301,13 @@ int createNonce(unsigned char *buffer)
     if (!currentTime)
     {
         cerr << "Error creating pointer containing current time\n";
-        return 0;
+        return NULL;
     }
     ret = strftime(now, TIME_BUFFER_SIZE, "%Y%j%H%M%S", currentTime);
     if (!ret)
     {
         cerr << "Error putting time in a char array\n";
-        return 0;
+        return NULL;
     }
 
     // Concatenate random number and timestamp
@@ -315,17 +315,19 @@ int createNonce(unsigned char *buffer)
     if (!tempNonce)
     {
         cerr << "Error allocating char buffer for nonce\n";
-        return 0;
+        return NULL;
     }
     bzero(tempNonce, RAND_BUFFER_SIZE + TIME_BUFFER_SIZE);
     memcpy(tempNonce, random, RAND_BUFFER_SIZE);
     free(random);
     strcat(tempNonce, now);
     free(now);
+
+    unsigned char *buffer = (unsigned char *)malloc(NONCE_SIZE);
     memcpy(buffer, tempNonce, NONCE_SIZE);
     free(tempNonce);
 
-    return 1;
+    return buffer;
 }
 
 int handleErrors(std::string msg = "")

@@ -24,10 +24,10 @@ class Client
 
     // Client variables
     unsigned char *client_nonce;
-    unsigned char *server_nonce;
+    size_t counter;
     string username;
     EVP_PKEY *client_private_key;
-    EVP_PKEY *server_public_key;
+    EC_KEY *client_key;
 
     // Available commands
     vector<string> commands = {"login", "balance", "transfer", "transactions"};
@@ -82,17 +82,6 @@ public:
         //     close(sock);
         //     exit(1);
         // }
-
-        cout << "Enter server public Key path:>> ";
-        path = "../keys/server_pub.pem";
-        // getline(cin, path);
-        server_public_key = convertToEVP(load_public_key(path.c_str()));
-        if (!server_public_key)
-        {
-            cerr << "\nError could not load server's public key\n";
-            close(sock);
-            exit(1);
-        }
     }
 
     // establish connection with server
@@ -128,64 +117,71 @@ public:
         printf("%s\n", buffer);
     }
 
-    // // Create and send challenge to the server M1
-    // void createAndSendEncryptedChallenge()
-    // {
-
-    //     int ret;
-    //     // Create client nonce
-    //     client_nonce = (unsigned char *)malloc(NONCE_SIZE);
-    //     if (!client_nonce)
-    //     {
-    //         cerr << "Error allocating buffer for server client nonce\n";
-    //         close(sock);
-    //         exit(1);
-    //     }
-    //     ret = createNonce(client_nonce);
-    //     if (!ret)
-    //     {
-    //         cerr << "Error creating client nonce for server\n";
-    //         close(sock);
-    //         exit(1);
-    //     }
-
-    //     // read public key for user and concatnate with nonce
-    //     // Allocate buffer for publickey
-    //     size_t pub_len = 0;
-    //     unsigned char *client_public_key = extractPublicKey(client_private_key, pub_len);
-
-    //     // Concatenate nonce and client's public key
-    //     unsigned char *payload = (unsigned char *)malloc(NONCE_SIZE + pub_len);
-    //     memcpy(payload, client_nonce, NONCE_SIZE);
-    //     memcpy(payload + NONCE_SIZE, client_public_key, pub_len);
-
-    //     size_t cipher_len = 0;
-    //     unsigned char *encrypted_payload = encryptPubRSA(payload, pub_len + NONCE_SIZE, client_public_key, pub_len, cipher_len);
-
-    //     sendMessageWithSize(sock, encrypted_payload, cipher_len);
-
-    //     cout << cipher_len << " Sent: " << bin_to_hex(encrypted_payload, cipher_len).data() << endl;
-
-    //     // Free
-    //     free(client_nonce);
-    //     free(client_public_key);
-    //     free(payload);
-    // }
-
-    void exchange_keys()
+    // Create and send challenge to the server M1
+    void createAndSendChallengeWithClientPub()
     {
+
+        int ret;
+        // Create client nonce
+        client_nonce = createNonce();
+        if (!client_nonce)
+        {
+            cerr << "Error creating client nonce for server\n";
+            close(sock);
+            exit(1);
+        }
+
         // Generate client's ephemeral ECDH private key
-        EC_KEY *client_key = generateECDHEC_KEY();
+        client_key = generateECDHEC_KEY();
 
         size_t pub_len = 0;
+        // read public key for user and concatnate with nonce
         unsigned char *client_public_key = extractPublicKey(client_key, pub_len);
-        // unsigned char *cpk = extractPrivateKey(client_key, pub_len);
 
-        // Send temprory public key to the server (e.g., over network) M1
-        sendMessageWithSize(sock, client_public_key, pub_len);
-        // cout << "PEM: \n"
-        //      << client_public_key << endl;
-        //  << cpk;
+        // Concatenate nonce and client's public key
+        size_t payload_len = NONCE_SIZE + pub_len;
+        unsigned char *payload = (unsigned char *)malloc(payload_len);
+        memcpy(payload, client_nonce, NONCE_SIZE);
+        memcpy(payload + NONCE_SIZE, client_public_key, pub_len);
+
+        sendMessageWithSize(sock, payload, payload_len);
+
+        if (PRINT_MESSAGES)
+            cout << NONCE_SIZE + pub_len << "M1 Sent: " << bin_to_hex(payload, payload_len) << endl;
+
+        // Free
+        free(client_nonce);
+        free(client_public_key);
+        free(payload);
+    }
+
+    // Receive Certificate and derive Shared Key M2
+    void exchange_keys()
+    {
+        X509 *certificate = receiveCertificate(sock);
+        if (!certificate)
+        {
+            cerr << "Failed to receive the server's certificate." << endl;
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
+        if (!verifyCertificate(certificate))
+        {
+            cerr << "Failed to verify the server's certificate." << endl;
+            X509_free(certificate);
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
+
+        EVP_PKEY *server_public_key = X509_get_pubkey(certificate);
+        if (!server_public_key)
+        {
+            cerr << "Failed to extract server's public key." << endl;
+            X509_free(certificate);
+            EVP_PKEY_free(server_public_key);
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
 
         printECDH("Client pub_key: ", convertToEVP(client_key));
         printECDH("Server pub_key: ", server_public_key);
@@ -202,15 +198,29 @@ public:
 
         // Cleanup
         EC_KEY_free(client_key);
-        free(client_public_key);
+        EVP_PKEY_free(server_public_key);
+        X509_free(certificate);
     }
-
+    // receive M3{Nc||Cs}k and send M4{Cs+1}k
     void authenticateWithServer()
     {
         unsigned int message_len = 0;
         unsigned char *message = recieveAndDecryptMsg(sock, &message_len, session_key);
-        cout << "Authenticated with server: " << message << endl;
+        // client Nonce doesn't match
+        if (!memcmp(message, client_nonce, NONCE_SIZE) || message_len < NONCE_SIZE)
+        {
+            cerr << "Failed to authenticate with server (Client Nonce Don't match)." << endl;
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
+        counter = size_t(message + NONCE_SIZE);
+        // memcpy(server_nonce, message + NONCE_SIZE, message_len - NONCE_SIZE);
+        cout << "Authenticated with server counter: " << counter << endl;
+        counter++;
+        char *payload = (char *)(counter);
+        encryptAndSendmsg(sock, (unsigned char *)payload, strlen(payload), session_key);
         free(message);
+        free(payload);
     }
     void login()
     {
@@ -302,15 +312,15 @@ public:
 
                 // Receive response from server
                 result = recieveAndDecryptMsg(sock, &result_len, session_key);
-                std::vector<sba_transaction_t> trxs = deserializeTransactionsFromString(split(string((char *)result, result_len), ':')[1]);
+                vector<sba_transaction_t> trxs = deserializeTransactionsFromString(split(string((char *)result, result_len), ':')[1]);
                 for (const auto &transaction : trxs)
                 {
                     string cipher = base64_decode(transaction.encTransaction);
                     size_t plaintext_len = 0;
                     unsigned char *plaintext = rsa::decryptPrvRSA((unsigned char *)cipher.c_str(), size_t(cipher.size()), client_private_key, plaintext_len);
                     string trx = string((char *)plaintext, plaintext_len);
-                    std::cout
-                        << "ID: " << transaction.id << ", UserID: " << transaction.userId << ", Transaction: " << trx << std::endl;
+                    cout
+                        << "ID: " << transaction.id << ", UserID: " << transaction.userId << ", Transaction: " << trx << endl;
                 }
             }
             // Send transfer command with username and amount
@@ -339,8 +349,8 @@ int main()
     user1.establish_connection();
     cout << "Client successfuly connected to the server\n";
 
-    // user1.createAndSendEncryptedChallenge();
-    // cout << "Challenge sent to the server\n";
+    user1.createAndSendChallengeWithClientPub();
+    cout << "Challenge With client public Key sent to the server\n";
 
     user1.exchange_keys();
     cout << "Exchanged keys Succesfully.\n";

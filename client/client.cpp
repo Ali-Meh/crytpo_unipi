@@ -121,7 +121,6 @@ public:
     void createAndSendChallengeWithClientPub()
     {
 
-        int ret;
         // Create client nonce
         client_nonce = createNonce();
         if (!client_nonce)
@@ -147,7 +146,8 @@ public:
         sendMessageWithSize(sock, payload, payload_len);
 
         if (PRINT_MESSAGES)
-            cout << NONCE_SIZE + pub_len << "M1 Sent: " << bin_to_hex(payload, payload_len) << endl;
+            cout << "<<M1: \n"
+                 << string((char *)payload, payload_len) << endl;
 
         // Free
         free(client_nonce);
@@ -158,7 +158,12 @@ public:
     // Receive Certificate and derive Shared Key M2
     void exchange_keys()
     {
-        X509 *certificate = receiveCertificate(sock);
+        unsigned int cert_len = 0;
+        unsigned char *cert_str = recieveSizedMessage(sock, &cert_len);
+        cout << ">>M2: \n"
+             << string((char *)cert_str, cert_len) << endl;
+        X509 *certificate = pemToX509(string((char *)cert_str, cert_len));
+        free(cert_str);
         if (!certificate)
         {
             cerr << "Failed to receive the server's certificate." << endl;
@@ -206,6 +211,8 @@ public:
     {
         unsigned int message_len = 0;
         unsigned char *message = recieveAndDecryptMsg(sock, &message_len, session_key);
+        cout << ">>M3: \n"
+             << string((char *)message, message_len) << endl;
         // client Nonce doesn't match
         if (!memcmp(message, client_nonce, NONCE_SIZE) || message_len < NONCE_SIZE)
         {
@@ -213,14 +220,15 @@ public:
             close(sock);
             exit(EXIT_FAILURE);
         }
-        counter = size_t(message + NONCE_SIZE);
+        counter = stoul(string((char *)message + NONCE_SIZE, message_len - NONCE_SIZE));
         // memcpy(server_nonce, message + NONCE_SIZE, message_len - NONCE_SIZE);
         cout << "Authenticated with server counter: " << counter << endl;
         counter++;
-        char *payload = (char *)(counter);
-        encryptAndSendmsg(sock, (unsigned char *)payload, strlen(payload), session_key);
+        string payload = to_string(counter);
+        cout << "<< M4: \n"
+             << payload << endl;
+        encryptAndSendmsg(sock, (unsigned char *)payload.c_str(), payload.size(), session_key);
         free(message);
-        free(payload);
     }
     void login()
     {

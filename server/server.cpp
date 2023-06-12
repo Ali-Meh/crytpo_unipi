@@ -28,7 +28,7 @@ public:
     int sd;                    /*Socket Descriptor*/
     string session_key;        /*Session key for secure connection*/
     sba_client_t user_session; /*username session belongs to*/
-    int valid_until;           /*Session key validity period*/
+    size_t counter = 0;        /*Session key validity period*/
 
     bool isLoggedIn()
     {
@@ -37,18 +37,31 @@ public:
 
     int exchange_keys(EVP_PKEY *ec_key)
     {
-        // Recieve temprory public key from client M1
-        unsigned int pub_len = 0;
-        unsigned char *peer_pubkey = recieveSizedMessage(sd, &pub_len);
-        cout << "PEM: \n"
-             << peer_pubkey;
+        // #M1 Recieve temprory public key from client  prepended Client Nonce
+        unsigned int payload_len = 0;
+        unsigned char *payload = recieveSizedMessage(sd, &payload_len);
+        string nonce((char *)payload, NONCE_SIZE);
+        // payload_len -= NONCE_SIZE;
+        unsigned char *peer_pubkey = payload + NONCE_SIZE;
+        if (PRINT_MESSAGES)
+            cout << ">>M1: \n"
+                 << string((char *)payload, payload_len) << endl;
         // Print the public key in hexadecimal format
-        EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, pub_len);
+        EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, payload_len - NONCE_SIZE);
 
-        printECDH("Recived Client pub_key: ", peer_pub_key);
-        printECDH("Server pub_key: ", ec_key);
+        // #M2 send Certificate of server to client
+        string cert = x509ToPEM(loadServerCertificate());
+        sendMessageWithSize(sd, cert);
+        if (PRINT_MESSAGES)
+            cout << "<<M2: \n"
+                 << cert << endl;
 
         // Generate shared secret
+        if (PRINT_MESSAGES)
+        {
+            printECDH("Recived Client pub_key: ", peer_pub_key);
+            printECDH("Server pub_key: ", ec_key);
+        }
         size_t secret_length = 0;
         unsigned char *sk = deriveSharedKey(ec_key, peer_pub_key, &secret_length);
 
@@ -61,27 +74,47 @@ public:
             std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
         }
         std::cout << std::dec << std::endl;
+        // #M3 send {Nc||Cs}k to client
+        string message = nonce + to_string(counter);
+        encryptAndSendmsg(sd, (unsigned char *)message.c_str(), message.size(), (unsigned char *)session_key.c_str());
+        if (PRINT_MESSAGES)
+            cout << "<<M3: " << message << endl;
 
-        // send NonceFor Authentication
-        unsigned char *nonce = (unsigned char *)malloc(NONCE_SIZE);
-        int ret = createNonce(nonce);
-        if (ret < 0)
-            cerr << "couln't create Nonce\n";
+        // #M4 recive {Cs+1}k from client
+        free(payload);
+        payload = recieveAndDecryptMsg(sd, &payload_len, (unsigned char *)session_key.c_str());
+        if (PRINT_MESSAGES)
+            cout << ">>M4: \n"
+                 << string((char *)payload, payload_len) << endl;
+        int ret = 1;
+        if (size_t(payload) == ++counter)
+        {
+            cout << "client Authenticated and session established with counter: " << counter;
+            ret = 0;
+        }
+        else
+        {
+            cout << "server authentication failed (wrong counter recieved): " << counter;
+        }
 
-        // int cipher_len = 0;
-        // unsigned char *cipher = crypter::encryptAES(nonce, NONCE_SIZE, &cipher_len, (unsigned char *)session_key.c_str());
+        //   unsigned char *nonce = (unsigned char *)malloc(NONCE_SIZE);
+        //   int ret = createNonce(nonce);
+        //   if (ret < 0)
+        //       cerr << "couln't create Nonce\n";
 
-        // cout << "<< Sending M2 Encrypted Nonce with sessionKey: " << bin_to_hex(nonce, NONCE_SIZE) << endl;
-        // sendMessageWithSize(sd, cipher, cipher_len);
+        // // int cipher_len = 0;
+        // // unsigned char *cipher = crypter::encryptAES(nonce, NONCE_SIZE, &cipher_len, (unsigned char *)session_key.c_str());
 
-        encryptAndSendmsg(sd, nonce, NONCE_SIZE, (unsigned char *)session_key.c_str());
+        // // cout << "<< Sending M2 Encrypted Nonce with sessionKey: " << bin_to_hex(nonce, NONCE_SIZE) << endl;
+        // // sendMessageWithSize(sd, cipher, cipher_len);
+
+        // encryptAndSendmsg(sd, nonce, NONCE_SIZE, (unsigned char *)session_key.c_str());
 
         // Cleanup
         EVP_PKEY_free(peer_pub_key);
-        free(peer_pubkey);
-        free(nonce);
+        free(payload);
         free(sk);
-        return 1;
+        return ret;
     }
 };
 
@@ -148,7 +181,7 @@ public:
             client_sockets[i].sd = 0;
         }
 
-        string path = "../keys/server_sec.pem";
+        string path = "../keys/server.key";
         // getline(cin, path);
         private_key = load_private_key(path.c_str());
         if (!private_key)

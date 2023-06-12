@@ -25,6 +25,7 @@
 #define MAX_MSG_LENGTH 1024
 #define ROOT_CA_CERT_PATH "../keys/root_ca.crt"
 #define ROOT_CA_CRL_PATH "../keys/root_ca.crl"
+#define SERVER_CERT_PATH "../keys/server.crt"
 
 // Verbose
 #define PRINT_ENCRYPT_MESSAGES FALSE

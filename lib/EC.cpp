@@ -8,6 +8,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/x509_vfy.h>
+#include "const.h"
 
 const char *PUB_FILE = "keys/server_pub.pem";
 const char *PRV_FILE = "keys/server_sec.pem";
@@ -383,28 +384,8 @@ string pubkey_tostring(EC_KEY *keypair)
     return pubkey_pem;
 }
 
-// Function to receive the server's certificate
-X509 *receiveCertificate(int sockfd)
-{
-    X509 *certificate = nullptr;
-    BIO *bio = BIO_new(BIO_s_socket());
-    BIO_set_fd(bio, sockfd, BIO_NOCLOSE);
-
-    certificate = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
-    if (!certificate)
-    {
-        std::cerr << "Failed to read the server's certificate." << std::endl;
-        handleOpenSSLErrors();
-        exit(EXIT_FAILURE);
-    }
-
-    BIO_free(bio);
-
-    return certificate;
-}
-
 // Function to verify the server's certificate with the root CA certificate and CRL
-bool verifyCertificate(X509 *certificate)
+bool verifyCertificate(X509 *certificate, string ca_cert_path = ROOT_CA_CERT_PATH, string ca_crl_path = ROOT_CA_CRL_PATH)
 {
     EVP_PKEY *publicKey = X509_get_pubkey(certificate);
     if (publicKey == nullptr)
@@ -422,14 +403,14 @@ bool verifyCertificate(X509 *certificate)
     }
 
     // Load the root CA certificate
-    if (X509_LOOKUP_load_file(lookup, ROOT_CA_CERT_PATH, X509_FILETYPE_PEM) != 1)
+    if (X509_LOOKUP_load_file(lookup, ca_cert_path.c_str(), X509_FILETYPE_PEM) != 1)
     {
         std::cerr << "Failed to load root CA certificate." << std::endl;
         return false;
     }
 
     // Load the CRL file
-    if (X509_STORE_load_locations(store, ROOT_CA_CRL_PATH, nullptr) != 1)
+    if (X509_STORE_load_locations(store, ca_crl_path.c_str(), nullptr) != 1)
     {
         std::cerr << "Failed to load CRL file." << std::endl;
         return false;
@@ -453,4 +434,61 @@ bool verifyCertificate(X509 *certificate)
     }
 
     return true;
+}
+// Function to read the server certificate from file
+X509 *loadServerCertificate(string certificate_path = SERVER_CERT_PATH)
+{
+    FILE *file = fopen(certificate_path.c_str(), "r");
+    if (!file)
+    {
+        std::cerr << "Failed to open the server certificate file." << std::endl;
+        return nullptr;
+    }
+
+    X509 *certificate = PEM_read_X509(file, nullptr, nullptr, nullptr);
+    if (!certificate)
+    {
+        std::cerr << "Failed to read the server certificate." << std::endl;
+        fclose(file);
+        return nullptr;
+    }
+
+    fclose(file);
+    return certificate;
+}
+
+// Function to send the server certificate over a socket
+std::string x509ToPEM(X509 *certificate)
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    if (!PEM_write_bio_X509(bio, certificate))
+    {
+        BIO_free(bio);
+        throw std::runtime_error("Failed to convert X509 certificate to PEM-encoded string.");
+    }
+
+    char *buffer = nullptr;
+    long length = BIO_get_mem_data(bio, &buffer);
+    std::string pemString(buffer, length);
+
+    BIO_free(bio);
+    return pemString;
+}
+X509 *pemToX509(const std::string &pemString)
+{
+    BIO *bio = BIO_new_mem_buf(pemString.c_str(), -1);
+    if (!bio)
+    {
+        throw std::runtime_error("Failed to create BIO for PEM-encoded string.");
+    }
+
+    X509 *certificate = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    if (!certificate)
+    {
+        BIO_free(bio);
+        throw std::runtime_error("Failed to convert PEM-encoded string to X509 certificate.");
+    }
+
+    BIO_free(bio);
+    return certificate;
 }

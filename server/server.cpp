@@ -50,7 +50,15 @@ public:
         EVP_PKEY *peer_pub_key = convertToEVP(peer_pubkey, payload_len - NONCE_SIZE);
 
         // #M2 send Certificate of server to client
-        string cert = x509ToPEM(loadServerCertificate());
+        X509 *certificate = loadServerCertificate();
+        if (!certificate)
+        {
+            cerr << "Failed to load the server's certificate." << endl;
+            EVP_PKEY_free(peer_pub_key);
+            free(payload);
+            return 0;
+        }
+        string cert = x509ToPEM(certificate);
         sendMessageWithSize(sd, cert);
         if (PRINT_MESSAGES)
             cout << "<<M2: \n"
@@ -113,6 +121,7 @@ public:
 
         // Cleanup
         EVP_PKEY_free(peer_pub_key);
+        X509_free(certificate);
         free(payload);
         free(sk);
         return ret;

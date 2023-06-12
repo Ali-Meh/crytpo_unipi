@@ -24,14 +24,12 @@ class Client
 
     // Client variables
     unsigned char *client_nonce;
-    uint counter;
+    uint counter = 0;
     string username;
     EVP_PKEY *client_private_key;
     EC_KEY *client_key;
 
     // Available commands
-    vector<string> commands = {"login", "balance", "transfer", "transactions"};
-    map<string, int> commands_map;
     string current_command;
 
     string getPassword()
@@ -82,6 +80,13 @@ public:
         //     close(sock);
         //     exit(1);
         // }
+    }
+    ~Client()
+    {
+        EC_KEY_free(client_key);
+        EVP_PKEY_free(client_private_key);
+        free(client_nonce);
+        free(session_key);
     }
 
     // establish connection with server
@@ -151,7 +156,7 @@ public:
 
         // Free
         free(client_nonce);
-        free(client_public_key);
+        delete[] client_public_key;
         free(payload);
     }
 
@@ -187,13 +192,13 @@ public:
             close(sock);
             exit(EXIT_FAILURE);
         }
-
-        printECDH("Client pub_key: ", convertToEVP(client_key));
+        EVP_PKEY *key = convertToEVP(client_key);
+        printECDH("Client pub_key: ", key);
         printECDH("Server pub_key: ", server_public_key);
 
         // Generate shared secret
         size_t secret_length = 0;
-        session_key = deriveSharedKey(convertToEVP(client_key), server_public_key, &secret_length);
+        session_key = deriveSharedKey(key, server_public_key, &secret_length);
         cout << "Client shared Secret: ";
         for (size_t i = 0; i < secret_length; i++)
         {
@@ -204,6 +209,7 @@ public:
         // Cleanup
         EC_KEY_free(client_key);
         EVP_PKEY_free(server_public_key);
+        EVP_PKEY_free(key);
         X509_free(certificate);
     }
     // receive M3{Nc||Cs}k and send M4{Cs+1}k
@@ -240,7 +246,13 @@ public:
 
         unsigned int result_len = 0;
         unsigned char *result = recieveAndDecryptMsg(sock, &result_len, &counter, session_key);
+        if (result == nullptr)
+        {
+            cout << "Couldn't decrypt the message: " << endl;
+            return;
+        }
         string result_str((char *)result, result_len);
+        free(result);
         switch (resolveResponse(result_str))
         {
         case Response::ERROR:
@@ -320,15 +332,17 @@ public:
 
                 // Receive response from server
                 result = recieveAndDecryptMsg(sock, &result_len, &counter, session_key);
+                size_t plaintext_len = 0;
+                unsigned char *plaintext;
                 vector<sba_transaction_t> trxs = deserializeTransactionsFromString(split(string((char *)result, result_len), ':')[1]);
                 for (const auto &transaction : trxs)
                 {
                     string cipher = base64_decode(transaction.encTransaction);
-                    size_t plaintext_len = 0;
-                    unsigned char *plaintext = rsa::decryptPrvRSA((unsigned char *)cipher.c_str(), size_t(cipher.size()), client_private_key, plaintext_len);
+                    plaintext = rsa::decryptPrvRSA((unsigned char *)cipher.c_str(), size_t(cipher.size()), client_private_key, plaintext_len);
                     string trx = string((char *)plaintext, plaintext_len);
                     cout
                         << "ID: " << transaction.id << ", UserID: " << transaction.userId << ", Transaction: " << trx << endl;
+                    delete[] plaintext;
                 }
             }
             // Send transfer command with username and amount

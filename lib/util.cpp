@@ -271,7 +271,7 @@ unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, uint *cou
 
     // get the messages counter
     *message_len = *message_len - COUNTER_SIZE;
-    uint cntr = deserializeUint(string((char *)message + (*message_len))); //(stoul(string((char *)message + (*message_len - sizeof(uint)), sizeof(uint))));
+    uint cntr = deserializeUint(string((char *)message + (*message_len), COUNTER_SIZE)); //(stoul(string((char *)message + (*message_len - sizeof(uint)), sizeof(uint))));
     if (cntr < *counter)
     {
         cout << "counter's don't match: " << cntr << " < " << *counter << endl;

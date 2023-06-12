@@ -345,7 +345,6 @@ namespace rsa
         }
 
         RSA_free(rsa);
-
         return string(reinterpret_cast<const char *>(decrypted.data()), result);
     }
 

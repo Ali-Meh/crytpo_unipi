@@ -28,7 +28,7 @@ public:
     int sd;                    /*Socket Descriptor*/
     string session_key;        /*Session key for secure connection*/
     sba_client_t user_session; /*username session belongs to*/
-    size_t counter = 0;        /*Session key validity period*/
+    uint counter = 0;          /*Session key validity period*/
 
     bool isLoggedIn()
     {
@@ -75,17 +75,18 @@ public:
         }
         std::cout << std::dec << std::endl;
         // #M3 send {Nc||Cs}k to client
-        string message = nonce + to_string(counter);
-        encryptAndSendmsg(sd, (unsigned char *)message.c_str(), message.size(), (unsigned char *)session_key.c_str());
+        // string message = nonce // + to_string(counter);
+        encryptAndSendmsg(sd, (unsigned char *)nonce.c_str(), nonce.size(), &counter, (unsigned char *)session_key.c_str());
         if (PRINT_MESSAGES)
-            cout << "<<M3: " << message << endl;
+            cout << "<<M3: \n"
+                 << bin_to_hex((unsigned char *)nonce.c_str(), nonce.size()) << endl;
 
         // #M4 recive {Cs+1}k from client
         free(payload);
-        payload = recieveAndDecryptMsg(sd, &payload_len, (unsigned char *)session_key.c_str());
+        payload = recieveAndDecryptMsg(sd, &payload_len, &counter, (unsigned char *)session_key.c_str());
         if (PRINT_MESSAGES)
             cout << ">>M4: \n"
-                 << string((char *)payload, payload_len) << endl;
+                 << string((char *)payload, payload_len) << counter << endl;
         int ret = 1;
         if (size_t(payload) == ++counter)
         {
@@ -140,6 +141,7 @@ class Server
         close(client_socket->sd);
         client_socket->in_use = false;
         client_socket->sd = 0;
+        client_socket->counter = 0;
         client_socket->session_key = "";
     }
     void onClientDisconnect(sba_client_conn *client_socket)
@@ -157,11 +159,11 @@ class Server
     int checkUserIsAuthenticated(sba_client_conn *client_socket)
     {
         int ret = 1;
-        if (!(*client_socket).isLoggedIn())
+        if (!client_socket->isLoggedIn())
         {
             // send unAuthorized to the client
             string result = Errors::NotAuthorized + ":";
-            ret = encryptAndSendmsg((*client_socket).sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)(*client_socket).session_key.c_str());
+            ret = encryptAndSendmsg(client_socket->sd, (unsigned char *)result.c_str(), result.size(), &client_socket->counter, (unsigned char *)client_socket->session_key.c_str());
             if (ret < 0)
             {
                 cerr << "Error:checkUserIsAuthenticated: Not able to send Error message" << endl;
@@ -202,14 +204,14 @@ public:
         if (db_users.empty() || !verify_password(args[2], db_users[0].password))
         {
             string result = generateResult(Errors::WrongCredentials, "you might retry");
-            encryptAndSendmsg(conn->sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn->session_key.c_str());
+            encryptAndSendmsg(conn->sd, (unsigned char *)result.c_str(), result.size(), &conn->counter, (unsigned char *)conn->session_key.c_str());
             return 0;
         }
         printf("found user id %d\n", db_users[0].id);
         conn->user_session = db_users[0];
         cout << "user logged in as: " << conn->user_session.username << endl;
         string result = generateResult(Errors::Null, "Loggedin Successfully as " + conn->user_session.username);
-        encryptAndSendmsg(conn->sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn->session_key.c_str());
+        encryptAndSendmsg(conn->sd, (unsigned char *)result.c_str(), result.size(), &conn->counter, (unsigned char *)conn->session_key.c_str());
         return 1;
     }
     int onBalance(vector<string> args, sba_client_conn conn)
@@ -219,13 +221,13 @@ public:
         if (db_users.empty())
         {
             string result = generateResult(Errors::NotFound);
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
             return 0;
         }
         printf("balance found user id %d\n", db_users[0].id);
         conn.user_session = db_users[0];
         string result = generateResult(Errors::Null, to_string(conn.user_session.balance));
-        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
         return 1;
     }
     int onTransfer(vector<string> args, sba_client_conn conn)
@@ -240,13 +242,13 @@ public:
         if (db_users.empty())
         {
             string result = generateResult(Errors::NotFound);
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
             return 0;
         }
         else if (db_users[0].balance < amount)
         {
             string result = generateResult(Errors::NotEnoughFunds, "Not Enough Funds...");
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
             return 0;
         }
         sender = db_users[0];
@@ -256,7 +258,7 @@ public:
         if (db_users.empty())
         {
             string result = generateResult(Errors::NotFound, "reciever doesn't exist");
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
             return 0;
         }
         receiver = db_users[0];
@@ -272,12 +274,12 @@ public:
         if (transferToReceiver(db, transaction, receiver.id, amount) != 0)
         {
             string result = generateResult(Errors::Todo);
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
             return 0;
         }
 
         string result = generateResult(Errors::Null, to_string(amount) + "$ to " + receiver.username);
-        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
         return 1;
     }
     int onList(vector<string> args, sba_client_conn conn)
@@ -287,7 +289,7 @@ public:
         if (db_transactions.empty())
         {
             string result = generateResult(Errors::NotFound);
-            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+            encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
             return 0;
         }
         if (PRINT_MESSAGES)
@@ -300,7 +302,7 @@ public:
         }
 
         string result = generateResult(Errors::Null, serializeTransactionsToString(db_transactions));
-        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), (unsigned char *)conn.session_key.c_str());
+        encryptAndSendmsg(conn.sd, (unsigned char *)result.c_str(), result.size(), &conn.counter, (unsigned char *)conn.session_key.c_str());
         return 1;
     }
 
@@ -432,7 +434,7 @@ public:
                     else if (client_sockets[i].in_use)
                     {
                         unsigned int command_len = 0;
-                        unsigned char *command = recieveAndDecryptMsg(sd, &command_len, (unsigned char *)client_sockets[i].session_key.c_str());
+                        unsigned char *command = recieveAndDecryptMsg(sd, &command_len, &client_sockets[i].counter, (unsigned char *)client_sockets[i].session_key.c_str());
                         if (command == NULL)
                         {
                             onClientDisconnect(&client_sockets[i]);

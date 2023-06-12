@@ -189,13 +189,28 @@ int sendMessageWithSize(int sd, unsigned char *message, int messageLength)
 
     return 1;
 }
-int encryptAndSendmsg(int sd, unsigned char *message, int messageLength, unsigned char *key)
+std::string serializeUint(uint number, size_t desiredSize = COUNTER_SIZE)
+{
+    std::ostringstream oss;
+    oss << std::setw(desiredSize) << std::setfill('0') << number;
+    return oss.str();
+}
+
+uint deserializeUint(const std::string &str)
+{
+    std::istringstream iss(str);
+    uint number = 0;
+    iss >> number;
+    return number;
+}
+int encryptAndSendmsg(int sd, unsigned char *message, int messageLength, uint *counter, unsigned char *key)
 {
     int cipher_len = 0;
-    unsigned char *cipher = crypter::encryptAES(message, messageLength, &cipher_len, key);
+    string payload = string((char *)message, messageLength) + serializeUint(++*counter);
+    unsigned char *cipher = crypter::encryptAES((unsigned char *)payload.c_str(), messageLength + COUNTER_SIZE, &cipher_len, key);
     int ret = sendMessageWithSize(sd, cipher, cipher_len);
     if (PRINT_MESSAGES)
-        cout << "<< Sending Message: " << bin_to_hex(message, messageLength) << endl;
+        cout << "<< Sending Message #" << *counter << ": " << bin_to_hex((unsigned char *)payload.c_str(), messageLength + COUNTER_SIZE) << endl;
     if (PRINT_ENCRYPT_MESSAGES)
         cout << "<< Encrypted(Hex): " << bin_to_hex(cipher, cipher_len) << endl;
     free(cipher);
@@ -242,7 +257,7 @@ unsigned char *recieveSizedMessage(int sd, unsigned int *totalSizePtr)
     return message;
 }
 
-unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned char *key)
+unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, uint *counter, unsigned char *key)
 {
     unsigned int cipher_len = 0;
     unsigned char *cipher = recieveSizedMessage(sd, &cipher_len);
@@ -253,8 +268,20 @@ unsigned char *recieveAndDecryptMsg(int sd, unsigned int *message_len, unsigned 
     if (PRINT_MESSAGES)
         cout << ">> Recived cipher: " << bin_to_hex(cipher, cipher_len) << endl;
     unsigned char *message = crypter::decryptAES(cipher, cipher_len, message_len, key);
+
+    // get the messages counter
+    *message_len = *message_len - COUNTER_SIZE;
+    uint cntr = deserializeUint(string((char *)message + (*message_len))); //(stoul(string((char *)message + (*message_len - sizeof(uint)), sizeof(uint))));
+    if (cntr < *counter)
+    {
+        cout << "counter's don't match: " << cntr << " < " << *counter << endl;
+        free(message);
+        free(cipher);
+        return nullptr;
+    }
     if (PRINT_DECRYPT_MESSAGES)
-        cout << ">> Decrypted(Hex): " << bin_to_hex(message, *message_len) << endl;
+        cout << ">> Decrypted(Hex) #" << cntr << ": " << bin_to_hex(message, *message_len + COUNTER_SIZE) << endl;
+    *counter = cntr;
     free(cipher);
     return message;
 }

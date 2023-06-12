@@ -12,6 +12,7 @@
 #define RAND_BUFFER_SIZE 16
 #define TIME_BUFFER_SIZE 64
 #define NONCE_SIZE 29
+#define COUNTER_SIZE 10
 
 #define SERVER_PORT 8080
 #define SERVER_ADDR "127.0.0.1"

@@ -24,7 +24,7 @@ class Client
 
     // Client variables
     unsigned char *client_nonce;
-    size_t counter;
+    uint counter;
     string username;
     EVP_PKEY *client_private_key;
     EC_KEY *client_key;
@@ -210,24 +210,24 @@ public:
     void authenticateWithServer()
     {
         unsigned int message_len = 0;
-        unsigned char *message = recieveAndDecryptMsg(sock, &message_len, session_key);
+        unsigned char *message = recieveAndDecryptMsg(sock, &message_len, &counter, session_key);
         cout << ">>M3: \n"
-             << string((char *)message, message_len) << endl;
+             << bin_to_hex(message, message_len) << endl;
         // client Nonce doesn't match
-        if (!memcmp(message, client_nonce, NONCE_SIZE) || message_len < NONCE_SIZE)
+        if (!memcmp(message, client_nonce, NONCE_SIZE))
         {
             cerr << "Failed to authenticate with server (Client Nonce Don't match)." << endl;
             close(sock);
             exit(EXIT_FAILURE);
         }
-        counter = stoul(string((char *)message + NONCE_SIZE, message_len - NONCE_SIZE));
+        // counter = stoul(string((char *)message + NONCE_SIZE, message_len - NONCE_SIZE));
         // memcpy(server_nonce, message + NONCE_SIZE, message_len - NONCE_SIZE);
         cout << "Authenticated with server counter: " << counter << endl;
-        counter++;
-        string payload = to_string(counter);
+        // counter++;
+        string payload = "";
         cout << "<< M4: \n"
-             << payload << endl;
-        encryptAndSendmsg(sock, (unsigned char *)payload.c_str(), payload.size(), session_key);
+             << payload << counter << endl;
+        encryptAndSendmsg(sock, (unsigned char *)payload.c_str(), payload.size(), &counter, session_key);
         free(message);
     }
     void login()
@@ -236,10 +236,10 @@ public:
         string password = getPassword();
         cout << endl;
         string command = ToString(Commands::Login) + ":" + username + ":" + password;
-        encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
+        encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), &counter, session_key);
 
         unsigned int result_len = 0;
-        unsigned char *result = recieveAndDecryptMsg(sock, &result_len, session_key);
+        unsigned char *result = recieveAndDecryptMsg(sock, &result_len, &counter, session_key);
         string result_str((char *)result, result_len);
         switch (resolveResponse(result_str))
         {
@@ -271,11 +271,11 @@ public:
                 command = to_string(Commands::Balance);
 
                 // encrypt command
-                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
+                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), &counter, session_key);
 
                 // Receive response from server
 
-                result = recieveAndDecryptMsg(sock, &result_len, session_key);
+                result = recieveAndDecryptMsg(sock, &result_len, &counter, session_key);
                 cout << "balance is: " << split(string((char *)result, result_len), ':')[1] << endl;
             }
             // Send transfer command with username and amount
@@ -294,11 +294,11 @@ public:
 
                 // encrypt command
                 command = to_string(Commands::Transfer) + ":" + reciever + ":" + amount;
-                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
+                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), &counter, session_key);
 
                 // Receive response from server
                 result_len = 0;
-                result = recieveAndDecryptMsg(sock, &result_len, session_key);
+                result = recieveAndDecryptMsg(sock, &result_len, &counter, session_key);
                 string result_str((char *)result, result_len);
                 switch (resolveResponse(result_str))
                 {
@@ -316,10 +316,10 @@ public:
                 command = to_string(Commands::List);
 
                 // encrypt command
-                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), session_key);
+                encryptAndSendmsg(sock, (unsigned char *)command.c_str(), command.size(), &counter, session_key);
 
                 // Receive response from server
-                result = recieveAndDecryptMsg(sock, &result_len, session_key);
+                result = recieveAndDecryptMsg(sock, &result_len, &counter, session_key);
                 vector<sba_transaction_t> trxs = deserializeTransactionsFromString(split(string((char *)result, result_len), ':')[1]);
                 for (const auto &transaction : trxs)
                 {

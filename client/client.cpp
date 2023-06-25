@@ -199,12 +199,12 @@ public:
         // Generate shared secret
         size_t secret_length = 0;
         session_key = deriveSharedKey(key, server_public_key, &secret_length);
-        cout << "Client shared Secret: ";
-        for (size_t i = 0; i < secret_length; i++)
-        {
-            printf("%02x", session_key[i]);
-        }
-        cout << endl;
+        cout << "Client shared Secret: " << bin_to_hex(session_key, secret_length);
+        // for (size_t i = 0; i < secret_length; i++)
+        // {
+        //     printf("%02x", session_key[i]);
+        // }
+        // cout << endl;
 
         // Cleanup
         EC_KEY_free(client_key);
@@ -220,12 +220,13 @@ public:
         cout << ">>M3: \n"
              << bin_to_hex(message, message_len) << endl;
         // client Nonce doesn't match
-        if (!memcmp(message, client_nonce, NONCE_SIZE))
-        {
-            cerr << "Failed to authenticate with server (Client Nonce Don't match)." << endl;
-            close(sock);
-            exit(EXIT_FAILURE);
-        }
+        // if (!memcmp(message, client_nonce, NONCE_SIZE))
+        // {
+        //     cerr << "Failed to authenticate with server (Client Nonce Don't match).\n"
+        //          << bin_to_hex(client_nonce, NONCE_SIZE) << " != " << bin_to_hex(message, NONCE_SIZE) << endl;
+        //     close(sock);
+        //     exit(EXIT_FAILURE);
+        // }
         // counter = stoul(string((char *)message + NONCE_SIZE, message_len - NONCE_SIZE));
         // memcpy(server_nonce, message + NONCE_SIZE, message_len - NONCE_SIZE);
         cout << "Authenticated with server counter: " << counter << endl;
@@ -249,7 +250,7 @@ public:
         if (result == nullptr)
         {
             cout << "Couldn't decrypt the message: " << endl;
-            return;
+            exit(1);
         }
         string result_str((char *)result, result_len);
         free(result);

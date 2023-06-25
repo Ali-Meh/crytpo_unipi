@@ -3,6 +3,7 @@
 #define HMAC_SIZE 32
 // #define blockSize 16
 #define ivSize 16
+#define TAG_SIZE 16
 
 #define BUFFER_SIZE 1025
 
@@ -29,6 +30,6 @@
 #define SERVER_CERT_PATH "../keys/server.crt"
 
 // Verbose
-#define PRINT_ENCRYPT_MESSAGES FALSE
+#define PRINT_ENCRYPT_MESSAGES TRUE
 #define PRINT_DECRYPT_MESSAGES TRUE
 #define PRINT_MESSAGES TRUE

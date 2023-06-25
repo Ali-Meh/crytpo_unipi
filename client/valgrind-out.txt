@@ -1,528 +1,527 @@
-==186399== Memcheck, a memory error detector
-==186399== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==186399== Using Valgrind-3.16.1-36d6727e1d-20200622X and LibVEX; rerun with -h for copyright info
-==186399== Command: ./client
-==186399== Parent PID: 186398
-==186399== 
---186399-- 
---186399-- Valgrind options:
---186399--    --leak-check=full
---186399--    --show-leak-kinds=all
---186399--    --track-origins=yes
---186399--    --verbose
---186399--    --log-file=valgrind-out.txt
---186399-- Contents of /proc/version:
---186399--   Linux version 5.19.0-43-generic (buildd@lcy02-amd64-028) (x86_64-linux-gnu-gcc (Ubuntu 11.3.0-1ubuntu1~22.04.1) 11.3.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #44~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon May 22 13:39:36 UTC 2
---186399-- 
---186399-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-ssse3-avx-avx2-bmi-f16c-rdrand
---186399-- Page sizes: currently 4096, max supported 4096
---186399-- Valgrind library directory: /usr/lib/x86_64-linux-gnu/valgrind
---186399-- Reading syms from /workspaces/crypto/client/client
---186399-- Reading syms from /lib/x86_64-linux-gnu/ld-2.31.so
---186399--   Considering /usr/lib/debug/.build-id/e2/5570740d590e5cb7b1a20d86332a8d1bb3b65f.debug ..
---186399--   .. build-id is valid
---186399-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux
---186399--   Considering /usr/lib/debug/.build-id/54/299c4aec0e5e5f3d7b8135341351d0e1dbfc64.debug ..
---186399--   .. build-id is valid
---186399--    object doesn't have a dynamic symbol table
---186399-- Scheduler: using generic scheduler lock implementation.
---186399-- Reading suppressions file: /usr/lib/x86_64-linux-gnu/valgrind/default.supp
-==186399== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-186399-by-vscode-on-7f4836127992
-==186399== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-186399-by-vscode-on-7f4836127992
-==186399== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-186399-by-vscode-on-7f4836127992
-==186399== 
-==186399== TO CONTROL THIS PROCESS USING vgdb (which you probably
-==186399== don't want to do, unless you know exactly what you're doing,
-==186399== or are doing some strange experiment):
-==186399==   /usr/bin/vgdb --pid=186399 ...command...
-==186399== 
-==186399== TO DEBUG THIS PROCESS USING GDB: start GDB like this
-==186399==   /path/to/gdb ./client
-==186399== and then give GDB the following command
-==186399==   target remote | /usr/bin/vgdb --pid=186399
-==186399== --pid is optional if only one valgrind process is running
-==186399== 
---186399-- REDIR: 0x401fa70 (ld-linux-x86-64.so.2:strlen) redirected to 0x580ca5f2 (vgPlain_amd64_linux_REDIR_FOR_strlen)
---186399-- REDIR: 0x401f850 (ld-linux-x86-64.so.2:index) redirected to 0x580ca60c (vgPlain_amd64_linux_REDIR_FOR_index)
---186399-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_core-amd64-linux.so
---186399--   Considering /usr/lib/debug/.build-id/f2/7641e081d3c37b410d7f31da4e2bf21040f356.debug ..
---186399--   .. build-id is valid
---186399-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so
---186399--   Considering /usr/lib/debug/.build-id/25/7cdcdf80e04f91ca9e3b185ee3b52995e89946.debug ..
---186399--   .. build-id is valid
-==186399== WARNING: new redirection conflicts with existing -- ignoring it
---186399--     old: 0x0401fa70 (strlen              ) R-> (0000.0) 0x580ca5f2 vgPlain_amd64_linux_REDIR_FOR_strlen
---186399--     new: 0x0401fa70 (strlen              ) R-> (2007.0) 0x0483bda0 strlen
---186399-- REDIR: 0x401c290 (ld-linux-x86-64.so.2:strcmp) redirected to 0x483cc90 (strcmp)
---186399-- REDIR: 0x401ffb0 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4840740 (mempcpy)
---186399-- Reading syms from /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
---186399--    object doesn't have a symbol table
---186399-- Reading syms from /usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6
---186399--    object doesn't have a symbol table
---186399-- Reading syms from /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28
---186399--    object doesn't have a symbol table
---186399-- Reading syms from /lib/x86_64-linux-gnu/libgcc_s.so.1
---186399--    object doesn't have a symbol table
---186399-- Reading syms from /lib/x86_64-linux-gnu/libc-2.31.so
---186399--   Considering /usr/lib/debug/.build-id/b5/03275bf9fee51581fdceef97533b194035b4f7.debug ..
---186399--   .. build-id is valid
---186399-- Reading syms from /lib/x86_64-linux-gnu/libdl-2.31.so
---186399--   Considering /usr/lib/debug/.build-id/46/b3bf3f9b9eb092a5c0cf5575e89092f768054c.debug ..
---186399--   .. build-id is valid
---186399-- Reading syms from /lib/x86_64-linux-gnu/libpthread-2.31.so
---186399--   Considering /usr/lib/debug/.build-id/25/5e355c207aba91a59ae1f808e3b4da443abf0c.debug ..
---186399--   .. build-id is valid
---186399-- Reading syms from /lib/x86_64-linux-gnu/libm-2.31.so
---186399--   Considering /usr/lib/debug/.build-id/1d/6ff6c4c69f3572486bc27b8290ee932b0b9f39.debug ..
---186399--   .. build-id is valid
---186399-- REDIR: 0x4ef8120 (libc.so.6:memmove) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef7420 (libc.so.6:strncpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef85f0 (libc.so.6:strcasecmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef6b70 (libc.so.6:strcat) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef74b0 (libc.so.6:rindex) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef99f0 (libc.so.6:rawmemchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f11d40 (libc.so.6:wmemchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f11810 (libc.so.6:wcscmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8360 (libc.so.6:mempcpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8090 (libc.so.6:bcmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef7370 (libc.so.6:strncmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef6c90 (libc.so.6:strcmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8250 (libc.so.6:memset) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f117a0 (libc.so.6:wcschr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef7270 (libc.so.6:strnlen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef6de0 (libc.so.6:strcspn) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8640 (libc.so.6:strncasecmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef6d50 (libc.so.6:strcpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8790 (libc.so.6:memcpy@@GLIBC_2.14) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f12fb0 (libc.so.6:wcsnlen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f11880 (libc.so.6:wcscpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef7520 (libc.so.6:strpbrk) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef6c00 (libc.so.6:index) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef7200 (libc.so.6:strlen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4efddb0 (libc.so.6:memrchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8690 (libc.so.6:strcasecmp_l) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8020 (libc.so.6:memchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f11920 (libc.so.6:wcslen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef77c0 (libc.so.6:strspn) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef8560 (libc.so.6:stpncpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef84d0 (libc.so.6:stpcpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef9a60 (libc.so.6:strchrnul) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef86e0 (libc.so.6:strncasecmp_l) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4f76280 (libc.so.6:__memcpy_chk) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4ef7f50 (libc.so.6:strstr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
---186399-- REDIR: 0x4fca130 (libc.so.6:__strrchr_avx2) redirected to 0x483b7b0 (rindex)
---186399-- REDIR: 0x4ef30f0 (libc.so.6:malloc) redirected to 0x4838710 (malloc)
---186399-- REDIR: 0x4fca300 (libc.so.6:__strlen_avx2) redirected to 0x483bc80 (strlen)
---186399-- REDIR: 0x4fc6910 (libc.so.6:__memcmp_avx2_movbe) redirected to 0x483ee80 (bcmp)
---186399-- REDIR: 0x4fc5820 (libc.so.6:__strcmp_avx2) redirected to 0x483cb90 (strcmp)
---186399-- REDIR: 0x4fcd270 (libc.so.6:__mempcpy_avx_unaligned_erms) redirected to 0x48403c0 (mempcpy)
---186399-- REDIR: 0x4d2b0a0 (libstdc++.so.6:operator new(unsigned long)) redirected to 0x4838d80 (operator new(unsigned long))
---186399-- REDIR: 0x4fcd290 (libc.so.6:__memcpy_avx_unaligned_erms) redirected to 0x483f760 (memmove)
---186399-- REDIR: 0x4ef7c60 (libc.so.6:__GI_strstr) redirected to 0x4840990 (__strstr_sse2)
---186399-- REDIR: 0x4fcd720 (libc.so.6:__memset_avx2_unaligned_erms) redirected to 0x483f650 (memset)
---186399-- REDIR: 0x4ef3720 (libc.so.6:free) redirected to 0x4839940 (free)
---186399-- REDIR: 0x4fc6180 (libc.so.6:__memchr_avx2) redirected to 0x483cd10 (memchr)
---186399-- REDIR: 0x4fc5c60 (libc.so.6:__strncmp_avx2) redirected to 0x483c370 (strncmp)
---186399-- REDIR: 0x4fc8360 (libc.so.6:__strncasecmp_avx) redirected to 0x483c5f0 (strncasecmp)
---186399-- REDIR: 0x4d29490 (libstdc++.so.6:operator delete(void*)) redirected to 0x4839e40 (operator delete(void*))
---186399-- REDIR: 0x4fca750 (libc.so.6:__strcat_avx2) redirected to 0x483b960 (strcat)
---186399-- REDIR: 0x4d2b0f0 (libstdc++.so.6:operator new[](unsigned long)) redirected to 0x48394a0 (operator new[](unsigned long))
---186399-- REDIR: 0x4d294c0 (libstdc++.so.6:operator delete[](void*)) redirected to 0x483a520 (operator delete[](void*))
---186399-- REDIR: 0x4ef3980 (libc.so.6:realloc) redirected to 0x483ad00 (realloc)
---186399-- REDIR: 0x4fcc4c0 (libc.so.6:__stpcpy_avx2) redirected to 0x483efa0 (stpcpy)
---186399-- REDIR: 0x4fc9d10 (libc.so.6:__strchr_avx2) redirected to 0x483b930 (index)
---186399-- REDIR: 0x4fc6cf0 (libc.so.6:__strcasecmp_avx) redirected to 0x483c530 (strcasecmp)
---186399-- REDIR: 0x4fc9f40 (libc.so.6:__strchrnul_avx2) redirected to 0x48402b0 (strchrnul)
---186399-- REDIR: 0x4fcd280 (libc.so.6:__memcpy_chk_avx_unaligned_erms) redirected to 0x4840820 (__memcpy_chk)
---186399-- REDIR: 0x4d294a0 (libstdc++.so.6:operator delete(void*, unsigned long)) redirected to 0x483a020 (operator delete(void*, unsigned long))
-==186399== 
-==186399== HEAP SUMMARY:
-==186399==     in use at exit: 4,655 bytes in 41 blocks
-==186399==   total heap usage: 6,083 allocs, 6,042 frees, 991,642 bytes allocated
-==186399== 
-==186399== Searching for pointers to 41 not-freed blocks
-==186399== Checked 181,704 bytes
-==186399== 
-==186399== 8 bytes in 1 blocks are still reachable in loss record 1 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EE54: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916CA6: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399== 
-==186399== 24 bytes in 1 blocks are still reachable in loss record 2 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EE41: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916B25: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399== 
-==186399== 24 bytes in 1 blocks are still reachable in loss record 3 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916E24: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 24 bytes in 1 blocks are still reachable in loss record 4 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916E44: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 24 bytes in 1 blocks are still reachable in loss record 5 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EE41: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916CA6: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 31 bytes in 1 blocks are still reachable in loss record 6 of 29
-==186399==    at 0x4838DEF: operator new(unsigned long) (vg_replace_malloc.c:342)
-==186399==    by 0x4DB8859: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28)
-==186399==    by 0x4DB9E7A: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28)
-==186399==    by 0x1187D7: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (basic_string.h:6099)
-==186399==    by 0x1175D1: Client::handleCommands() (client.cpp:308)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 32 bytes in 1 blocks are still reachable in loss record 7 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x1144A7: deriveSharedKey(evp_pkey_st*, evp_pkey_st*, unsigned long*) (EC.cpp:37)
-==186399==    by 0x1169E9: Client::exchange_keys() (client.cpp:201)
-==186399==    by 0x115833: main (client.cpp:377)
-==186399== 
-==186399== 48 bytes in 2 blocks are still reachable in loss record 8 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49037EC: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A0FA1D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399== 
-==186399== 56 bytes in 1 blocks are still reachable in loss record 9 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A4A097: CRYPTO_THREAD_lock_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49D92BE: EVP_PKEY_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FB464: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F880C: PEM_read_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111210: rsa::load_private_key(char const*, char*) (RSA.cpp:21)
-==186399==    by 0x1161C4: Client::Client() (client.cpp:65)
-==186399==    by 0x1157BE: main (client.cpp:367)
-==186399== 
-==186399== 56 bytes in 1 blocks are still reachable in loss record 10 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A4A097: CRYPTO_THREAD_lock_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A134DA: RSA_new_method (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A11AB4: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4901A43: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF73A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A0FA1D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FB49B: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399== 
-==186399== 56 bytes in 1 blocks are still reachable in loss record 11 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A4A097: CRYPTO_THREAD_lock_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916ADA: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 72 bytes in 1 blocks are still reachable in loss record 12 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49D9297: EVP_PKEY_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FB464: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F880C: PEM_read_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111210: rsa::load_private_key(char const*, char*) (RSA.cpp:21)
-==186399==    by 0x1161C4: Client::Client() (client.cpp:65)
-==186399==    by 0x1157BE: main (client.cpp:367)
-==186399== 
-==186399== 80 bytes in 1 blocks are still reachable in loss record 13 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916AC9: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 104 bytes in 1 blocks are still reachable in loss record 14 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x4920197: BN_MONT_CTX_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205DC: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1562A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 104 bytes in 1 blocks are still reachable in loss record 15 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x4920197: BN_MONT_CTX_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205DC: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1565D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 104 bytes in 1 blocks are still reachable in loss record 16 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x4920197: BN_MONT_CTX_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205DC: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15A61: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 128 bytes in 1 blocks are still reachable in loss record 17 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49202D2: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1562A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 128 bytes in 1 blocks are still reachable in loss record 18 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49202D2: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1565D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 144 bytes in 6 blocks are still reachable in loss record 19 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491E2E8: BN_secure_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4903894: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399== 
-==186399== 176 bytes in 1 blocks are still reachable in loss record 20 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A134BF: RSA_new_method (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A11AB4: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4901A43: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF73A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A0FA1D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FB49B: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49F880C: PEM_read_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399== 
-==186399== 256 bytes in 1 blocks are still reachable in loss record 21 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EE54: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916B25: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399== 
-==186399== 256 bytes in 1 blocks are still reachable in loss record 22 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EFE4: BN_bin2bn (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x492470F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49248E1: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916CED: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399== 
-==186399== 256 bytes in 1 blocks are still reachable in loss record 23 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491B8AD: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4916D0A: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399== 
-==186399== 256 bytes in 1 blocks are still reachable in loss record 24 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49202D2: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15A61: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 264 bytes in 1 blocks are still reachable in loss record 25 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EEFC: BN_set_bit (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x492043F: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1562A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 264 bytes in 1 blocks are still reachable in loss record 26 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EEFC: BN_set_bit (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x492043F: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1565D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 264 bytes in 2 blocks are still reachable in loss record 27 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EFE4: BN_bin2bn (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49037C8: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399== 
-==186399== 520 bytes in 1 blocks are still reachable in loss record 28 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EEFC: BN_set_bit (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x492043F: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A15A61: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x111FBB: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
-==186399==    by 0x117A78: Client::handleCommands() (client.cpp:341)
-==186399==    by 0x115899: main (client.cpp:386)
-==186399== 
-==186399== 896 bytes in 6 blocks are still reachable in loss record 29 of 29
-==186399==    at 0x483877F: malloc (vg_replace_malloc.c:307)
-==186399==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EC50: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x491EFE4: BN_bin2bn (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x4903868: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
-==186399== 
-==186399== LEAK SUMMARY:
-==186399==    definitely lost: 0 bytes in 0 blocks
-==186399==    indirectly lost: 0 bytes in 0 blocks
-==186399==      possibly lost: 0 bytes in 0 blocks
-==186399==    still reachable: 4,655 bytes in 41 blocks
-==186399==         suppressed: 0 bytes in 0 blocks
-==186399== 
-==186399== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==14053== Memcheck, a memory error detector
+==14053== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==14053== Using Valgrind-3.16.1-36d6727e1d-20200622X and LibVEX; rerun with -h for copyright info
+==14053== Command: ./client
+==14053== Parent PID: 14052
+==14053== 
+--14053-- 
+--14053-- Valgrind options:
+--14053--    --leak-check=full
+--14053--    --show-leak-kinds=all
+--14053--    --track-origins=yes
+--14053--    --verbose
+--14053--    --log-file=valgrind-out.txt
+--14053-- Contents of /proc/version:
+--14053--   Linux version 5.19.0-45-generic (buildd@lcy02-amd64-117) (x86_64-linux-gnu-gcc (Ubuntu 11.3.0-1ubuntu1~22.04.1) 11.3.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #46~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jun 7 15:06:04 UTC 20
+--14053-- 
+--14053-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-ssse3-avx-avx2-bmi-f16c-rdrand
+--14053-- Page sizes: currently 4096, max supported 4096
+--14053-- Valgrind library directory: /usr/lib/x86_64-linux-gnu/valgrind
+--14053-- Reading syms from /workspaces/crypto/client/client
+--14053-- Reading syms from /lib/x86_64-linux-gnu/ld-2.31.so
+--14053--   Considering /usr/lib/debug/.build-id/e2/5570740d590e5cb7b1a20d86332a8d1bb3b65f.debug ..
+--14053--   .. build-id is valid
+--14053-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux
+--14053--   Considering /usr/lib/debug/.build-id/54/299c4aec0e5e5f3d7b8135341351d0e1dbfc64.debug ..
+--14053--   .. build-id is valid
+--14053--    object doesn't have a dynamic symbol table
+--14053-- Scheduler: using generic scheduler lock implementation.
+--14053-- Reading suppressions file: /usr/lib/x86_64-linux-gnu/valgrind/default.supp
+==14053== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-14053-by-vscode-on-7f4836127992
+==14053== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-14053-by-vscode-on-7f4836127992
+==14053== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-14053-by-vscode-on-7f4836127992
+==14053== 
+==14053== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==14053== don't want to do, unless you know exactly what you're doing,
+==14053== or are doing some strange experiment):
+==14053==   /usr/bin/vgdb --pid=14053 ...command...
+==14053== 
+==14053== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==14053==   /path/to/gdb ./client
+==14053== and then give GDB the following command
+==14053==   target remote | /usr/bin/vgdb --pid=14053
+==14053== --pid is optional if only one valgrind process is running
+==14053== 
+--14053-- REDIR: 0x401fa70 (ld-linux-x86-64.so.2:strlen) redirected to 0x580ca5f2 (vgPlain_amd64_linux_REDIR_FOR_strlen)
+--14053-- REDIR: 0x401f850 (ld-linux-x86-64.so.2:index) redirected to 0x580ca60c (vgPlain_amd64_linux_REDIR_FOR_index)
+--14053-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_core-amd64-linux.so
+--14053--   Considering /usr/lib/debug/.build-id/f2/7641e081d3c37b410d7f31da4e2bf21040f356.debug ..
+--14053--   .. build-id is valid
+--14053-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so
+--14053--   Considering /usr/lib/debug/.build-id/25/7cdcdf80e04f91ca9e3b185ee3b52995e89946.debug ..
+--14053--   .. build-id is valid
+==14053== WARNING: new redirection conflicts with existing -- ignoring it
+--14053--     old: 0x0401fa70 (strlen              ) R-> (0000.0) 0x580ca5f2 vgPlain_amd64_linux_REDIR_FOR_strlen
+--14053--     new: 0x0401fa70 (strlen              ) R-> (2007.0) 0x0483bda0 strlen
+--14053-- REDIR: 0x401c290 (ld-linux-x86-64.so.2:strcmp) redirected to 0x483cc90 (strcmp)
+--14053-- REDIR: 0x401ffb0 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4840740 (mempcpy)
+--14053-- Reading syms from /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
+--14053--    object doesn't have a symbol table
+--14053-- Reading syms from /usr/lib/x86_64-linux-gnu/libsqlite3.so.0.8.6
+--14053--    object doesn't have a symbol table
+--14053-- Reading syms from /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28
+--14053--    object doesn't have a symbol table
+--14053-- Reading syms from /lib/x86_64-linux-gnu/libgcc_s.so.1
+--14053--    object doesn't have a symbol table
+--14053-- Reading syms from /lib/x86_64-linux-gnu/libc-2.31.so
+--14053--   Considering /usr/lib/debug/.build-id/b5/03275bf9fee51581fdceef97533b194035b4f7.debug ..
+--14053--   .. build-id is valid
+--14053-- Reading syms from /lib/x86_64-linux-gnu/libdl-2.31.so
+--14053--   Considering /usr/lib/debug/.build-id/46/b3bf3f9b9eb092a5c0cf5575e89092f768054c.debug ..
+--14053--   .. build-id is valid
+--14053-- Reading syms from /lib/x86_64-linux-gnu/libpthread-2.31.so
+--14053--   Considering /usr/lib/debug/.build-id/25/5e355c207aba91a59ae1f808e3b4da443abf0c.debug ..
+--14053--   .. build-id is valid
+--14053-- Reading syms from /lib/x86_64-linux-gnu/libm-2.31.so
+--14053--   Considering /usr/lib/debug/.build-id/1d/6ff6c4c69f3572486bc27b8290ee932b0b9f39.debug ..
+--14053--   .. build-id is valid
+--14053-- REDIR: 0x4ef8120 (libc.so.6:memmove) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef7420 (libc.so.6:strncpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef85f0 (libc.so.6:strcasecmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef6b70 (libc.so.6:strcat) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef74b0 (libc.so.6:rindex) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef99f0 (libc.so.6:rawmemchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f11d40 (libc.so.6:wmemchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f11810 (libc.so.6:wcscmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8360 (libc.so.6:mempcpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8090 (libc.so.6:bcmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef7370 (libc.so.6:strncmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef6c90 (libc.so.6:strcmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8250 (libc.so.6:memset) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f117a0 (libc.so.6:wcschr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef7270 (libc.so.6:strnlen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef6de0 (libc.so.6:strcspn) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8640 (libc.so.6:strncasecmp) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef6d50 (libc.so.6:strcpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8790 (libc.so.6:memcpy@@GLIBC_2.14) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f12fb0 (libc.so.6:wcsnlen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f11880 (libc.so.6:wcscpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef7520 (libc.so.6:strpbrk) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef6c00 (libc.so.6:index) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef7200 (libc.so.6:strlen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4efddb0 (libc.so.6:memrchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8690 (libc.so.6:strcasecmp_l) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8020 (libc.so.6:memchr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f11920 (libc.so.6:wcslen) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef77c0 (libc.so.6:strspn) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef8560 (libc.so.6:stpncpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef84d0 (libc.so.6:stpcpy) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef9a60 (libc.so.6:strchrnul) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef86e0 (libc.so.6:strncasecmp_l) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4f76280 (libc.so.6:__memcpy_chk) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4ef7f50 (libc.so.6:strstr) redirected to 0x482e1b0 (_vgnU_ifunc_wrapper)
+--14053-- REDIR: 0x4fca130 (libc.so.6:__strrchr_avx2) redirected to 0x483b7b0 (rindex)
+--14053-- REDIR: 0x4ef30f0 (libc.so.6:malloc) redirected to 0x4838710 (malloc)
+--14053-- REDIR: 0x4fca300 (libc.so.6:__strlen_avx2) redirected to 0x483bc80 (strlen)
+--14053-- REDIR: 0x4fc6910 (libc.so.6:__memcmp_avx2_movbe) redirected to 0x483ee80 (bcmp)
+--14053-- REDIR: 0x4fc5820 (libc.so.6:__strcmp_avx2) redirected to 0x483cb90 (strcmp)
+--14053-- REDIR: 0x4fcd270 (libc.so.6:__mempcpy_avx_unaligned_erms) redirected to 0x48403c0 (mempcpy)
+--14053-- REDIR: 0x4d2b0a0 (libstdc++.so.6:operator new(unsigned long)) redirected to 0x4838d80 (operator new(unsigned long))
+--14053-- REDIR: 0x4fcd290 (libc.so.6:__memcpy_avx_unaligned_erms) redirected to 0x483f760 (memmove)
+--14053-- REDIR: 0x4ef7c60 (libc.so.6:__GI_strstr) redirected to 0x4840990 (__strstr_sse2)
+--14053-- REDIR: 0x4fcd720 (libc.so.6:__memset_avx2_unaligned_erms) redirected to 0x483f650 (memset)
+--14053-- REDIR: 0x4ef3720 (libc.so.6:free) redirected to 0x4839940 (free)
+--14053-- REDIR: 0x4fc6180 (libc.so.6:__memchr_avx2) redirected to 0x483cd10 (memchr)
+--14053-- REDIR: 0x4fc5c60 (libc.so.6:__strncmp_avx2) redirected to 0x483c370 (strncmp)
+--14053-- REDIR: 0x4fc8360 (libc.so.6:__strncasecmp_avx) redirected to 0x483c5f0 (strncasecmp)
+--14053-- REDIR: 0x4d29490 (libstdc++.so.6:operator delete(void*)) redirected to 0x4839e40 (operator delete(void*))
+--14053-- REDIR: 0x4fca750 (libc.so.6:__strcat_avx2) redirected to 0x483b960 (strcat)
+--14053-- REDIR: 0x4d2b0f0 (libstdc++.so.6:operator new[](unsigned long)) redirected to 0x48394a0 (operator new[](unsigned long))
+--14053-- REDIR: 0x4d294c0 (libstdc++.so.6:operator delete[](void*)) redirected to 0x483a520 (operator delete[](void*))
+--14053-- REDIR: 0x4ef3980 (libc.so.6:realloc) redirected to 0x483ad00 (realloc)
+--14053-- REDIR: 0x4fcc4c0 (libc.so.6:__stpcpy_avx2) redirected to 0x483efa0 (stpcpy)
+--14053-- REDIR: 0x4fc9d10 (libc.so.6:__strchr_avx2) redirected to 0x483b930 (index)
+--14053-- REDIR: 0x4fc6cf0 (libc.so.6:__strcasecmp_avx) redirected to 0x483c530 (strcasecmp)
+--14053-- REDIR: 0x4fcd280 (libc.so.6:__memcpy_chk_avx_unaligned_erms) redirected to 0x4840820 (__memcpy_chk)
+--14053-- REDIR: 0x4d294a0 (libstdc++.so.6:operator delete(void*, unsigned long)) redirected to 0x483a020 (operator delete(void*, unsigned long))
+==14053== 
+==14053== HEAP SUMMARY:
+==14053==     in use at exit: 4,655 bytes in 41 blocks
+==14053==   total heap usage: 6,301 allocs, 6,260 frees, 1,064,820 bytes allocated
+==14053== 
+==14053== Searching for pointers to 41 not-freed blocks
+==14053== Checked 181,704 bytes
+==14053== 
+==14053== 8 bytes in 1 blocks are still reachable in loss record 1 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EE54: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916CA6: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053== 
+==14053== 24 bytes in 1 blocks are still reachable in loss record 2 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EE41: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916B25: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053== 
+==14053== 24 bytes in 1 blocks are still reachable in loss record 3 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916E24: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 24 bytes in 1 blocks are still reachable in loss record 4 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916E44: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 24 bytes in 1 blocks are still reachable in loss record 5 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EE41: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916CA6: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 31 bytes in 1 blocks are still reachable in loss record 6 of 29
+==14053==    at 0x4838DEF: operator new(unsigned long) (vg_replace_malloc.c:342)
+==14053==    by 0x4DB8859: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28)
+==14053==    by 0x4DB9E7A: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28)
+==14053==    by 0x118F89: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (basic_string.h:6099)
+==14053==    by 0x117D73: Client::handleCommands() (client.cpp:309)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 32 bytes in 1 blocks are still reachable in loss record 7 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x114C58: deriveSharedKey(evp_pkey_st*, evp_pkey_st*, unsigned long*) (EC.cpp:37)
+==14053==    by 0x1171A2: Client::exchange_keys() (client.cpp:201)
+==14053==    by 0x115FE4: main (client.cpp:378)
+==14053== 
+==14053== 48 bytes in 2 blocks are still reachable in loss record 8 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49037EC: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A0FA1D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053== 
+==14053== 56 bytes in 1 blocks are still reachable in loss record 9 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A4A097: CRYPTO_THREAD_lock_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49D92BE: EVP_PKEY_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FB464: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F880C: PEM_read_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x1119C1: rsa::load_private_key(char const*, char*) (RSA.cpp:21)
+==14053==    by 0x116974: Client::Client() (client.cpp:65)
+==14053==    by 0x115F6F: main (client.cpp:368)
+==14053== 
+==14053== 56 bytes in 1 blocks are still reachable in loss record 10 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A4A097: CRYPTO_THREAD_lock_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A134DA: RSA_new_method (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A11AB4: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4901A43: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF73A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A0FA1D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FB49B: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053== 
+==14053== 56 bytes in 1 blocks are still reachable in loss record 11 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A4A097: CRYPTO_THREAD_lock_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916ADA: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 72 bytes in 1 blocks are still reachable in loss record 12 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49D9297: EVP_PKEY_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FB464: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F880C: PEM_read_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x1119C1: rsa::load_private_key(char const*, char*) (RSA.cpp:21)
+==14053==    by 0x116974: Client::Client() (client.cpp:65)
+==14053==    by 0x115F6F: main (client.cpp:368)
+==14053== 
+==14053== 80 bytes in 1 blocks are still reachable in loss record 13 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916AC9: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 104 bytes in 1 blocks are still reachable in loss record 14 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x4920197: BN_MONT_CTX_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205DC: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1562A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 104 bytes in 1 blocks are still reachable in loss record 15 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x4920197: BN_MONT_CTX_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205DC: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1565D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 104 bytes in 1 blocks are still reachable in loss record 16 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x4920197: BN_MONT_CTX_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205DC: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15A61: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 128 bytes in 1 blocks are still reachable in loss record 17 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49202D2: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1562A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 128 bytes in 1 blocks are still reachable in loss record 18 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49202D2: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1565D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 144 bytes in 6 blocks are still reachable in loss record 19 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E299: BN_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491E2E8: BN_secure_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4903894: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053== 
+==14053== 176 bytes in 1 blocks are still reachable in loss record 20 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A134BF: RSA_new_method (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A11AB4: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4901A43: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF73A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A0FA1D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FB49B: d2i_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F83DA: PEM_read_bio_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49F880C: PEM_read_PrivateKey (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053== 
+==14053== 256 bytes in 1 blocks are still reachable in loss record 21 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EE54: BN_dup (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916B25: BN_BLINDING_new (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916D78: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053== 
+==14053== 256 bytes in 1 blocks are still reachable in loss record 22 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EFE4: BN_bin2bn (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x492470F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49248E1: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916CED: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053== 
+==14053== 256 bytes in 1 blocks are still reachable in loss record 23 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491B8AD: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4916D0A: BN_BLINDING_create_param (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A125CC: RSA_setup_blinding (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15B72: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A16B77: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053== 
+==14053== 256 bytes in 1 blocks are still reachable in loss record 24 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EDCE: BN_copy (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49202D2: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15A61: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 264 bytes in 1 blocks are still reachable in loss record 25 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EEFC: BN_set_bit (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x492043F: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1562A: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 264 bytes in 1 blocks are still reachable in loss record 26 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EEFC: BN_set_bit (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x492043F: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1565D: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 264 bytes in 2 blocks are still reachable in loss record 27 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EFE4: BN_bin2bn (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49037C8: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053== 
+==14053== 520 bytes in 1 blocks are still reachable in loss record 28 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EBF0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EEFC: BN_set_bit (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x492043F: BN_MONT_CTX_set (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x49205F2: BN_MONT_CTX_set_locked (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A15A61: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A1694F: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4A18420: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x11276C: rsa::decryptPrvRSA(unsigned char*, unsigned long, evp_pkey_st*, unsigned long&) (RSA.cpp:305)
+==14053==    by 0x11821A: Client::handleCommands() (client.cpp:342)
+==14053==    by 0x11604A: main (client.cpp:387)
+==14053== 
+==14053== 896 bytes in 6 blocks are still reachable in loss record 29 of 29
+==14053==    at 0x483877F: malloc (vg_replace_malloc.c:307)
+==14053==    by 0x49E3349: CRYPTO_zalloc (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EC50: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x491EFE4: BN_bin2bn (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x4903868: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FE596: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF66C: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFB55: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFDC0: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FF467: ??? (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFEED: ASN1_item_ex_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053==    by 0x48FFF6A: ASN1_item_d2i (in /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1)
+==14053== 
+==14053== LEAK SUMMARY:
+==14053==    definitely lost: 0 bytes in 0 blocks
+==14053==    indirectly lost: 0 bytes in 0 blocks
+==14053==      possibly lost: 0 bytes in 0 blocks
+==14053==    still reachable: 4,655 bytes in 41 blocks
+==14053==         suppressed: 0 bytes in 0 blocks
+==14053== 
+==14053== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -448,12 +448,10 @@ sqlite3 *connect(string file = "SBA.db")
     exit = sqlite3_open(file.data(), &db);
     if (exit)
     {
-
         cout << "DB Open Error: " << sqlite3_errmsg(db) << endl;
     }
     else
     {
-
         cout << "Opened Database Successfully!" << endl;
     }
     return db;

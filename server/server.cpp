@@ -5,6 +5,7 @@
 #include <cstring>
 #include "vector"
 #include <stdlib.h>
+#include <math.h>
 #include <errno.h>
 #include <unistd.h>    //close
 #include <arpa/inet.h> //close
@@ -241,7 +242,7 @@ public:
     }
     int onTransfer(vector<string> args, sba_client_conn conn)
     {
-        double amount = stod(args[2]);
+        double amount = fabs(stod(args[2]));
         sba_client_t sender, receiver;
         cout << "onTransfer... from " << conn.user_session.username
              << " to " << args[1]
@@ -262,7 +263,7 @@ public:
         }
         sender = db_users[0];
 
-        // get sender user
+        // get receiver user
         db_users = getClientByUsername(db, args[1]);
         if (db_users.empty())
         {
@@ -451,6 +452,7 @@ public:
                             continue;
                         }
                         string command_str((char *)command, command_len);
+                        free(command);
                         cout << "command Received: " << command_str << endl;
 
                         vector<string> args = split(command_str, ':');

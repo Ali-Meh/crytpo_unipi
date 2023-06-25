@@ -220,13 +220,14 @@ public:
         cout << ">>M3: \n"
              << bin_to_hex(message, message_len) << endl;
         // client Nonce doesn't match
-        // if (!memcmp(message, client_nonce, NONCE_SIZE))
-        // {
-        //     cerr << "Failed to authenticate with server (Client Nonce Don't match).\n"
-        //          << bin_to_hex(client_nonce, NONCE_SIZE) << " != " << bin_to_hex(message, NONCE_SIZE) << endl;
-        //     close(sock);
-        //     exit(EXIT_FAILURE);
-        // }
+        if (!memcmp(message, client_nonce, NONCE_SIZE))
+        {
+            cerr << "Failed to authenticate with server (Client Nonce Don't match).\n"
+                 << bin_to_hex(message, NONCE_SIZE) << "!=\n"
+                 << bin_to_hex(client_nonce, NONCE_SIZE) << endl;
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
         // counter = stoul(string((char *)message + NONCE_SIZE, message_len - NONCE_SIZE));
         // memcpy(server_nonce, message + NONCE_SIZE, message_len - NONCE_SIZE);
         cout << "Authenticated with server counter: " << counter << endl;

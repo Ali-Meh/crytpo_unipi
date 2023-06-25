@@ -202,8 +202,6 @@ EVP_PKEY *load_private_key(string private_key_path)
     EC_KEY *keypair = nullptr;
 
     // Load the private key from file
-    // Replace this implementation with your own file loading logic
-    // Example:
     BIO *private_key_bio = BIO_new_file(private_key_path.c_str(), "r");
     if (private_key_bio)
     {

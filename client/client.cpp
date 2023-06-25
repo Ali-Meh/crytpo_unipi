@@ -222,7 +222,9 @@ public:
         // client Nonce doesn't match
         if (!memcmp(message, client_nonce, NONCE_SIZE))
         {
-            cerr << "Failed to authenticate with server (Client Nonce Don't match)." << endl;
+            cerr << "Failed to authenticate with server (Client Nonce Don't match).\n"
+                 << bin_to_hex(message, NONCE_SIZE) << "!=\n"
+                 << bin_to_hex(client_nonce, NONCE_SIZE) << endl;
             close(sock);
             exit(EXIT_FAILURE);
         }

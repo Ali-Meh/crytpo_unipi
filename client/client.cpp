@@ -24,6 +24,7 @@ class Client
 
     // Client variables
     unsigned char *client_nonce;
+    unsigned char *server_nonce;
     uint counter = 0;
     string username;
     EVP_PKEY *client_private_key;
@@ -86,6 +87,7 @@ public:
         EC_KEY_free(client_key);
         EVP_PKEY_free(client_private_key);
         free(client_nonce);
+        free(server_nonce);
         free(session_key);
     }
 
@@ -212,7 +214,7 @@ public:
         EVP_PKEY_free(key);
         X509_free(certificate);
     }
-    // receive M3{Nc||Cs}k and send M4{Cs+1}k
+    // receive M3{Ns||Nc||Cs}k and send M4{Ns||Cs+1}k
     void authenticateWithServer()
     {
         unsigned int message_len = 0;
@@ -220,22 +222,19 @@ public:
         cout << ">>M3: \n"
              << bin_to_hex(message, message_len) << endl;
         // client Nonce doesn't match
-        if (!memcmp(message, client_nonce, NONCE_SIZE))
+        if (!memcmp(message + NONCE_SIZE, client_nonce, NONCE_SIZE))
         {
             cerr << "Failed to authenticate with server (Client Nonce Don't match).\n"
-                 << bin_to_hex(message, NONCE_SIZE) << "!=\n"
+                 << bin_to_hex(message + NONCE_SIZE, NONCE_SIZE) << "!=\n"
                  << bin_to_hex(client_nonce, NONCE_SIZE) << endl;
             close(sock);
             exit(EXIT_FAILURE);
         }
-        // counter = stoul(string((char *)message + NONCE_SIZE, message_len - NONCE_SIZE));
-        // memcpy(server_nonce, message + NONCE_SIZE, message_len - NONCE_SIZE);
+        memcpy(server_nonce, message, NONCE_SIZE);
         cout << "Authenticated with server counter: " << counter << endl;
-        // counter++;
-        string payload = "";
         cout << "<< M4: \n"
-             << payload << counter << endl;
-        encryptAndSendmsg(sock, (unsigned char *)payload.c_str(), payload.size(), &counter, session_key);
+             << server_nonce << counter << endl;
+        encryptAndSendmsg(sock, server_nonce, NONCE_SIZE, &counter, session_key);
         free(message);
     }
     void login()

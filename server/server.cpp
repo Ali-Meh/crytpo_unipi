@@ -76,49 +76,42 @@ public:
 
         session_key = string((char *)sk, secret_length);
 
-        std::cout << "Server shared Secret: ";
-        for (size_t i = 0; i < session_key.size(); ++i)
+        std::cout << "Server shared Secret: " << bin_to_hex(sk, secret_length) << std::endl;
+
+        // #M3 send {Ns||Nc||Cs}k to client
+        // Create server nonce
+        unsigned char *ns = createNonce();
+        if (!ns)
         {
-            unsigned char byte = static_cast<unsigned char>(session_key[i]);
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+            cerr << "Error creating server nonce.\n";
+            close(sd);
+            exit(1);
         }
-        std::cout << std::dec << std::endl;
-        // #M3 send {Nc||Cs}k to client
-        // string message = nonce // + to_string(counter);
-        encryptAndSendmsg(sd, (unsigned char *)nonce.c_str(), nonce.size(), &counter, (unsigned char *)session_key.c_str());
+        string serverNonce = string((char *)ns, NONCE_SIZE);
+        free(ns);
+        string msg = serverNonce + nonce;
+
+        encryptAndSendmsg(sd, (unsigned char *)msg.c_str(), msg.size(), &counter, (unsigned char *)session_key.c_str());
         if (PRINT_MESSAGES)
             cout << "<<M3: \n"
-                 << bin_to_hex((unsigned char *)nonce.c_str(), nonce.size()) << endl;
+                 << bin_to_hex((unsigned char *)(msg).c_str(), msg.size()) << endl;
 
-        // #M4 recive {Cs+1}k from client
+        // #M4 recive {Ns||Cs+1}k from client
         free(payload);
         payload = recieveAndDecryptMsg(sd, &payload_len, &counter, (unsigned char *)session_key.c_str());
         if (PRINT_MESSAGES)
             cout << ">>M4: \n"
                  << string((char *)payload, payload_len) << counter << endl;
         int ret = 1;
-        if (size_t(payload) == ++counter)
+        if (memcmp(payload, (unsigned char *)serverNonce.c_str(), NONCE_SIZE) /* && size_t(payload + NONCE_SIZE) == ++counter */)
         {
             cout << "client Authenticated and session established with counter: " << counter;
             ret = 0;
         }
         else
         {
-            cout << "server authentication failed (wrong counter recieved): " << counter;
+            cout << "server authentication failed (wrong nonce recieved): " << string((char *)payload, NONCE_SIZE) << "recived : " << serverNonce;
         }
-
-        //   unsigned char *nonce = (unsigned char *)malloc(NONCE_SIZE);
-        //   int ret = createNonce(nonce);
-        //   if (ret < 0)
-        //       cerr << "couln't create Nonce\n";
-
-        // // int cipher_len = 0;
-        // // unsigned char *cipher = crypter::encryptAES(nonce, NONCE_SIZE, &cipher_len, (unsigned char *)session_key.c_str());
-
-        // // cout << "<< Sending M2 Encrypted Nonce with sessionKey: " << bin_to_hex(nonce, NONCE_SIZE) << endl;
-        // // sendMessageWithSize(sd, cipher, cipher_len);
-
-        // encryptAndSendmsg(sd, nonce, NONCE_SIZE, (unsigned char *)session_key.c_str());
 
         // Cleanup
         EVP_PKEY_free(peer_pub_key);

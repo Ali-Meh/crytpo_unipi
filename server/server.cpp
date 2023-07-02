@@ -103,14 +103,16 @@ public:
             cout << ">>M4: \n"
                  << string((char *)payload, payload_len) << " " << counter << endl;
         int ret = 1;
-        if (memcmp(payload, (unsigned char *)serverNonce.c_str(), NONCE_SIZE) /* && size_t(payload + NONCE_SIZE) == ++counter */)
+        if (memcmp(payload, (unsigned char *)serverNonce.c_str(), NONCE_SIZE) == 0)
         {
-            cout << "client Authenticated and session established with counter: " << counter;
-            ret = 0;
+            cout << "client Authenticated and session established with counter: " << counter << endl;
         }
         else
         {
-            cout << "server authentication failed (wrong nonce recieved): " << string((char *)payload, NONCE_SIZE) << "recived : " << serverNonce;
+            cout << "server authentication failed (wrong nonce recieved): \n"
+                 << string((char *)payload, NONCE_SIZE) << "\n!=\n"
+                 << serverNonce << endl;
+            ret = 0;
         }
 
         // Cleanup

@@ -42,6 +42,7 @@ build:
 ###
 # openssl ecparam -name prime256v1 -genkey -noout -out root_ca.key
 # openssl req -x509 -new -key root_ca.key -out root_ca.crt
+# openssl ca -config crl.cnf -gencrl -out root_ca.crl
 
 # openssl ecparam -name prime256v1 -genkey -noout -out server.key
 # openssl req -new -key server.key -out server.csr

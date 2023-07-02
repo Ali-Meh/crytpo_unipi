@@ -55,13 +55,16 @@ class Client
 public:
     Client()
     {
-        cout << "Enter Username:>> ";
-        username = "a";
-        // getline(cin, username);
+        cout << "Enter Username:>> (a) ";
+        getline(cin, username);
+        if (username.empty())
+            username = "a";
 
-        cout << "\nEnter your private Key path:>> ";
-        string path = "../keys/sc149.pem";
-        // getline(cin, path);
+        cout << "\nEnter your private Key path:>> (../keys/sc169.pem)";
+        string path;
+        getline(cin, path);
+        if (path.empty())
+            path = "../keys/sc169.pem";
         client_private_key = rsa::load_private_key(path.c_str());
         if (!client_private_key)
         {
@@ -69,17 +72,6 @@ public:
             close(sock);
             exit(1);
         }
-
-        // cout << "Enter your public Key path:>> ";
-        // path = "../keys/pc139.pem";
-        // // getline(cin, path);
-        // RSA *client_public_key = load_public_key(path.c_str());
-        // if (!client_public_key)
-        // {
-        //     cerr << "Error could not load user's private key\n";
-        //     close(sock);
-        //     exit(1);
-        // }
     }
     ~Client()
     {

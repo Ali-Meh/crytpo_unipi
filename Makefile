@@ -39,6 +39,16 @@ build:
 # 	nc localhost 8080
 
 
+###
+# openssl ecparam -name prime256v1 -genkey -noout -out root_ca.key
+# openssl req -x509 -new -key root_ca.key -out root_ca.crt
+
+# openssl ecparam -name prime256v1 -genkey -noout -out server.key
+# openssl req -new -key server.key -out server.csr
+# openssl x509 -req -in server.csr -CA root_ca.crt -CAkey root_ca.key -CAcreateserial -out server.crt
+###
+
+
 srvcheck:server-compile
 	cd server && valgrind --leak-check=full \
 			--show-leak-kinds=all \

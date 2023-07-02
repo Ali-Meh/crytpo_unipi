@@ -24,7 +24,6 @@ class Client
 
     // Client variables
     unsigned char *client_nonce;
-    unsigned char *server_nonce;
     uint counter = 0;
     string username;
     EVP_PKEY *client_private_key;
@@ -87,7 +86,6 @@ public:
         EC_KEY_free(client_key);
         EVP_PKEY_free(client_private_key);
         free(client_nonce);
-        free(server_nonce);
         free(session_key);
     }
 
@@ -230,11 +228,10 @@ public:
             close(sock);
             exit(EXIT_FAILURE);
         }
-        memcpy(server_nonce, message, NONCE_SIZE);
         cout << "Authenticated with server counter: " << counter << endl;
         cout << "<< M4: \n"
-             << server_nonce << counter << endl;
-        encryptAndSendmsg(sock, server_nonce, NONCE_SIZE, &counter, session_key);
+             << string((char *)message, NONCE_SIZE) << " " << counter << endl;
+        encryptAndSendmsg(sock, message, NONCE_SIZE, &counter, session_key);
         free(message);
     }
     void login()

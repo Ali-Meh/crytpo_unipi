@@ -101,7 +101,7 @@ public:
         payload = recieveAndDecryptMsg(sd, &payload_len, &counter, (unsigned char *)session_key.c_str());
         if (PRINT_MESSAGES)
             cout << ">>M4: \n"
-                 << string((char *)payload, payload_len) << counter << endl;
+                 << string((char *)payload, payload_len) << " " << counter << endl;
         int ret = 1;
         if (memcmp(payload, (unsigned char *)serverNonce.c_str(), NONCE_SIZE) /* && size_t(payload + NONCE_SIZE) == ++counter */)
         {

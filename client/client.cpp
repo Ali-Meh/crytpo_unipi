@@ -157,8 +157,9 @@ public:
     {
         unsigned int cert_len = 0;
         unsigned char *cert_str = recieveSizedMessage(sock, &cert_len);
-        cout << ">>M2: \n"
-             << string((char *)cert_str, cert_len) << endl;
+        if (PRINT_MESSAGES)
+            cout << ">>M2: \n"
+                 << string((char *)cert_str, cert_len) << endl;
         X509 *certificate = pemToX509(string((char *)cert_str, cert_len));
         free(cert_str);
         if (!certificate)
@@ -185,8 +186,11 @@ public:
             exit(EXIT_FAILURE);
         }
         EVP_PKEY *key = convertToEVP(client_key);
-        printECDH("Client pub_key: ", key);
-        printECDH("Server pub_key: ", server_public_key);
+        if (PRINT_MESSAGES)
+        {
+            printECDH("Client pub_key: ", key);
+            printECDH("Server pub_key: ", server_public_key);
+        }
 
         // Generate shared secret
         size_t secret_length = 0;
@@ -209,8 +213,9 @@ public:
     {
         unsigned int message_len = 0;
         unsigned char *message = recieveAndDecryptMsg(sock, &message_len, &counter, session_key);
-        cout << ">>M3: \n"
-             << bin_to_hex(message, message_len) << endl;
+        if (PRINT_MESSAGES)
+            cout << ">>M3: \n"
+                 << bin_to_hex(message, message_len) << endl;
         // client Nonce doesn't match
         if (!memcmp(message + NONCE_SIZE, client_nonce, NONCE_SIZE))
         {
@@ -221,8 +226,9 @@ public:
             exit(EXIT_FAILURE);
         }
         cout << "Authenticated with server counter: " << counter << endl;
-        cout << "<< M4: \n"
-             << string((char *)message, NONCE_SIZE) << " " << counter << endl;
+        if (PRINT_MESSAGES)
+            cout << "<< M4: \n"
+                 << string((char *)message, NONCE_SIZE) << " " << counter << endl;
         encryptAndSendmsg(sock, message, NONCE_SIZE, &counter, session_key);
         free(message);
     }

@@ -154,7 +154,7 @@ class Server
         // Somebody disconnected , get his details and print
         getpeername(client_socket->sd, (struct sockaddr *)&address,
                     (socklen_t *)&addrlen);
-        printf("Host disconnected , ip %s , port %d, sock %d\n",
+        printf("Client disconnected , ip %s , port %d, sock %d\n",
                inet_ntoa(address.sin_addr), ntohs(address.sin_port), client_socket->sd);
 
         // Close the socket and mark as 0 in list for reuse
@@ -448,7 +448,8 @@ public:
                         }
                         string command_str((char *)command, command_len);
                         free(command);
-                        cout << "command Received: " << command_str << endl;
+                        if (PRINT_MESSAGES)
+                            cout << "command Received: " << command_str << endl;
 
                         vector<string> args = split(command_str, ':');
                         switch (resolveCommand(args[0]))
